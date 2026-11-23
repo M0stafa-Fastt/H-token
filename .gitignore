@@ -1,0 +1,6 @@
+data.json
+data.json.tmp
+eng.traineddata
+node_modules/
+.env
+.vercel
