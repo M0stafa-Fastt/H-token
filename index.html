@@ -97,17 +97,19 @@
             border-top: 1px solid rgba(239, 43, 67, 0.45);
             box-shadow: 0 -24px 90px rgba(225, 29, 72, 0.45);
             filter: blur(2px);
+            will-change: transform, opacity;
+            transform: translateZ(0);
             animation: horizonPulse 10s ease-in-out infinite alternate;
         }
 
         @keyframes horizonPulse {
             0% {
                 opacity: 0.72;
-                transform: translateY(0) scaleX(1);
+                transform: translate3d(0, 0, 0) scaleX(1);
             }
             100% {
                 opacity: 1;
-                transform: translateY(-10px) scaleX(1.03);
+                transform: translate3d(0, -10px, 0) scaleX(1.03);
             }
         }
 
@@ -116,21 +118,23 @@
             left: 50%;
             top: -30vh;
             width: 112vw;
+            margin-left: -56vw;
             height: 66vh;
             background: radial-gradient(closest-side, rgba(225, 29, 72, 0.38), rgba(142, 11, 29, 0.1) 62%, transparent);
             filter: blur(48px);
-            transform: translateX(-50%);
+            will-change: transform, opacity;
+            transform: translateZ(0);
             animation: emberBreath 14s ease-in-out infinite alternate;
         }
 
         @keyframes emberBreath {
             0% {
                 opacity: 0.62;
-                transform: translateX(-50%) scale(1);
+                transform: translateZ(0) scale(1);
             }
             100% {
                 opacity: 1;
-                transform: translateX(-48.5%) scale(1.07);
+                transform: translate3d(1.5%, 0, 0) scale(1.07);
             }
         }
 
@@ -241,34 +245,7 @@
                 linear-gradient(rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.18)) right bottom / 1px 10px no-repeat;
         }
 
-        /* ---------- Auth Orbital Chamber & Readiness Chips ---------- */
-        .auth-showcase {
-            background:
-                radial-gradient(circle at 50% 30%, rgba(225, 29, 72, 0.28), transparent 65%),
-                linear-gradient(155deg, rgba(24, 10, 14, 0.95) 0%, rgba(9, 9, 11, 0.98) 100%);
-        }
-
-        @keyframes spinOrbit {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
-        .orbit-ring {
-            position: absolute;
-            inset: -14px;
-            border-radius: 999px;
-            border: 1px dashed rgba(239, 43, 67, 0.45);
-            animation: spinOrbit 22s linear infinite;
-            pointer-events: none;
-        }
-
-        .orbit-ring--outer {
-            inset: -26px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-top-color: rgba(239, 43, 67, 0.7);
-            animation: spinOrbit 15s linear infinite reverse;
-        }
-
+        /* ---------- Readiness Chips ---------- */
         .ready-pill {
             display: inline-flex;
             align-items: center;
@@ -527,40 +504,12 @@
             display: none;
         }
 
-        /* ---------- Header, Monogram & Navigation ---------- */
+        /* ---------- Header & Navigation ---------- */
         .site-header {
             background: rgba(6, 6, 6, 0.78);
             backdrop-filter: blur(18px) saturate(140%);
             -webkit-backdrop-filter: blur(18px) saturate(140%);
             border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-        }
-
-        .monogram {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: grid;
-            place-items: center;
-            background: linear-gradient(180deg, #161618, #0b0b0c);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 26px -12px rgba(209, 20, 44, 0.72);
-        }
-
-        .monogram svg {
-            width: 20px;
-            height: 20px;
-        }
-
-        .monogram--lg {
-            width: 60px;
-            height: 60px;
-            border-radius: 16px;
-            margin: 0 auto 14px;
-        }
-
-        .monogram--lg svg {
-            width: 32px;
-            height: 32px;
         }
 
         .brand-word {
@@ -764,13 +713,11 @@
             from {
                 opacity: 0;
                 transform: translateY(10px);
-                filter: blur(4px);
             }
 
             to {
                 opacity: 1;
                 transform: translateY(0);
-                filter: blur(0);
             }
         }
 
@@ -780,6 +727,7 @@
 
         @media (prefers-reduced-motion: reduce) {
             .bg-ember,
+            .bg-horizon,
             .animate-enter {
                 animation: none;
             }
@@ -806,13 +754,6 @@
         <div class="max-w-5xl mx-auto px-4 sm:px-6 py-2.5 min-h-16 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
             <!-- Brand -->
             <div class="flex items-center gap-3 min-w-0">
-                <div class="monogram shrink-0">
-                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                        <rect x="8" y="6.5" width="3.4" height="19" rx="0.6" fill="#f4f4f5" />
-                        <rect x="20.6" y="6.5" width="3.4" height="19" rx="0.6" fill="#f4f4f5" />
-                        <path d="M11.4 18.6 L20.6 13.6 L20.6 17.1 L11.4 22.1 Z" fill="#ef2b43" />
-                    </svg>
-                </div>
                 <div class="flex items-center gap-1.5" dir="ltr">
                     <h1 id="brandTitle" class="brand-word text-[19px] leading-none text-white">h token</h1>
                     <span class="brand-dot mt-1"></span>
@@ -879,128 +820,78 @@
     <main id="publicPortalView" class="relative z-10 flex-1 flex items-center justify-center px-4 py-7 sm:py-10">
         <div class="w-full max-w-5xl animate-enter">
 
-            <!-- 1) Auth View (Asymmetric Split Showcase) -->
-            <section id="authView" class="glass-card rounded-3xl overflow-hidden max-w-4xl mx-auto">
-                <div class="grid grid-cols-1 lg:grid-cols-12">
-                    <!-- Brand Showcase Chamber -->
-                    <div class="lg:col-span-5 auth-showcase p-8 sm:p-10 flex flex-col items-center justify-between border-b lg:border-b-0 lg:border-e border-white/[0.07] text-center relative overflow-hidden">
-                        <div class="w-full flex items-center justify-between text-[10px] font-mono text-zinc-500">
-                            <span>SYS // ACTIVE</span>
-                            <span class="flex items-center gap-1.5 text-red-400">
-                                <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                                LIVE
-                            </span>
-                        </div>
-
-                        <div class="my-8 relative flex flex-col items-center">
-                            <div class="relative mb-5">
-                                <div class="orbit-ring"></div>
-                                <div class="orbit-ring orbit-ring--outer"></div>
-                                <div class="monogram monogram--lg !mb-0 relative z-10">
-                                    <svg viewBox="0 0 32 32" aria-hidden="true">
-                                        <rect x="8" y="6.5" width="3.4" height="19" rx="0.6" fill="#f4f4f5" />
-                                        <rect x="20.6" y="6.5" width="3.4" height="19" rx="0.6" fill="#f4f4f5" />
-                                        <path d="M11.4 18.6 L20.6 13.6 L20.6 17.1 L11.4 22.1 Z" fill="#ef2b43" />
-                                    </svg>
-                                </div>
-                            </div>
-                            <span class="eyebrow mb-2">ACCESS PORTAL</span>
-                            <h2 id="authHeading" class="brand-word text-3xl text-white">h token</h2>
-                            <p id="authSubheading" class="text-zinc-400 text-xs mt-1.5">
-                                سجّل دخولك للبدء
-                            </p>
-                        </div>
-
-                        <div class="w-full space-y-2 text-start text-xs font-mono">
-                            <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-black/45 border border-white/[0.06]">
-                                <span class="text-zinc-300">REPORTS</span>
-                                <span class="text-red-400">01</span>
-                            </div>
-                            <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-black/45 border border-white/[0.06]">
-                                <span class="text-zinc-300">HWID</span>
-                                <span class="text-red-400">02</span>
-                            </div>
-                            <div class="flex items-center justify-between px-3 py-2 rounded-xl bg-black/45 border border-white/[0.06]">
-                                <span class="text-zinc-300">VORTEX</span>
-                                <span class="text-red-400">03</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Auth Forms Chamber -->
-                    <div class="lg:col-span-7 p-7 sm:p-10 flex flex-col justify-center">
-                        <!-- Login / Register Segmented Control -->
-                        <div class="seg mb-6">
-                            <button type="button" id="authTabLogin" onclick="switchAuthTab('login')" class="seg-tab is-active">
-                                تسجيل الدخول
-                            </button>
-                            <button type="button" id="authTabRegister" onclick="switchAuthTab('register')" class="seg-tab">
-                                إنشاء حساب
-                            </button>
-                        </div>
-
-                        <!-- Auth Alert -->
-                        <div id="authAlertBox" role="alert"
-                            class="hidden mb-4 rounded-xl p-3 text-xs font-semibold bg-red-950/70 border border-red-500/40 text-red-300">
-                        </div>
-
-                        <!-- Login Form -->
-                        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
-                            <div>
-                                <label for="loginUsername" id="labelLoginUser"
-                                    class="block text-xs font-bold text-zinc-300 mb-1.5">اسم المستخدم</label>
-                                <input type="text" id="loginUsername" required dir="ltr" placeholder="username"
-                                    class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 font-mono" />
-                            </div>
-                            <div>
-                                <label for="loginPassword" id="labelLoginPass"
-                                    class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور</label>
-                                <input type="password" id="loginPassword" required placeholder="••••••••"
-                                    class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
-                            </div>
-                            <button type="submit" id="loginSubmitBtn"
-                                class="btn-crimson w-full py-3.5 rounded-xl text-white font-extrabold text-sm cursor-pointer">
-                                دخول
-                            </button>
-                        </form>
-
-                        <!-- Register Form -->
-                        <form id="registerForm" onsubmit="handleRegister(event)" class="hidden space-y-4">
-                            <div>
-                                <label for="regName" id="labelRegName"
-                                    class="block text-xs font-bold text-zinc-300 mb-1.5">الاسم <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" id="regName" required placeholder="اسمك"
-                                    class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
-                            </div>
-                            <div>
-                                <label for="regUsername" id="labelRegUser"
-                                    class="block text-xs font-bold text-zinc-300 mb-1.5">اسم المستخدم (بالإنجليزي) <span
-                                        class="text-red-500">*</span></label>
-                                <input type="text" id="regUsername" required dir="ltr" placeholder="mohamed_1"
-                                    class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 font-mono" />
-                            </div>
-                            <div>
-                                <label for="regPassword" id="labelRegPass"
-                                    class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور <span
-                                        class="text-red-500">*</span></label>
-                                <input type="password" id="regPassword" required placeholder="••••••••"
-                                    class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
-                            </div>
-                            <button type="submit" id="regSubmitBtn"
-                                class="btn-crimson w-full py-3.5 rounded-xl text-white font-extrabold text-sm cursor-pointer">
-                                إنشاء الحساب والدخول
-                            </button>
-                        </form>
-
-                        <div class="mt-6 pt-4 border-t border-white/[0.07] text-center">
-                            <button type="button" onclick="switchPublicPage('activation')" id="authActivationHint"
-                                class="text-xs font-semibold text-zinc-400 hover:text-red-400 transition cursor-pointer">
-                                صفحة التفعيل
-                            </button>
-                        </div>
+            <!-- 1) Auth View (Clean Centered Card, Register Default) -->
+            <section id="authView" class="glass-card rounded-3xl max-w-md mx-auto p-6 sm:p-8">
+                <div class="text-center mb-6" dir="ltr">
+                    <div class="inline-flex items-center gap-1.5">
+                        <h2 id="authHeading" class="brand-word text-2xl text-white">h token</h2>
+                        <span class="brand-dot mt-1"></span>
                     </div>
                 </div>
+
+                <!-- Register / Login Segmented Control -->
+                <div class="seg mb-6">
+                    <button type="button" id="authTabRegister" onclick="switchAuthTab('register')" class="seg-tab is-active">
+                        إنشاء حساب
+                    </button>
+                    <button type="button" id="authTabLogin" onclick="switchAuthTab('login')" class="seg-tab">
+                        تسجيل الدخول
+                    </button>
+                </div>
+
+                <!-- Auth Alert -->
+                <div id="authAlertBox" role="alert"
+                    class="hidden mb-4 rounded-xl p-3 text-xs font-semibold bg-red-950/70 border border-red-500/40 text-red-300">
+                </div>
+
+                <!-- Register Form (Default Active) -->
+                <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4">
+                    <div>
+                        <label for="regName" id="labelRegName"
+                            class="block text-xs font-bold text-zinc-300 mb-1.5">الاسم <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="regName" required placeholder="اسمك"
+                            class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
+                    </div>
+                    <div>
+                        <label for="regUsername" id="labelRegUser"
+                            class="block text-xs font-bold text-zinc-300 mb-1.5">اسم المستخدم (بالإنجليزي) <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="regUsername" required dir="ltr" placeholder="mohamed_1"
+                            class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 font-mono" />
+                    </div>
+                    <div>
+                        <label for="regPassword" id="labelRegPass"
+                            class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور <span
+                                class="text-red-500">*</span></label>
+                        <input type="password" id="regPassword" required placeholder="••••••••"
+                            class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
+                    </div>
+                    <button type="submit" id="regSubmitBtn"
+                        class="btn-crimson w-full py-3.5 rounded-xl text-white font-extrabold text-sm cursor-pointer">
+                        إنشاء الحساب والدخول
+                    </button>
+                </form>
+
+                <!-- Login Form -->
+                <form id="loginForm" onsubmit="handleLogin(event)" class="hidden space-y-4">
+                    <div>
+                        <label for="loginUsername" id="labelLoginUser"
+                            class="block text-xs font-bold text-zinc-300 mb-1.5">اسم المستخدم</label>
+                        <input type="text" id="loginUsername" required dir="ltr" placeholder="username"
+                            class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600 font-mono" />
+                    </div>
+                    <div>
+                        <label for="loginPassword" id="labelLoginPass"
+                            class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور</label>
+                        <input type="password" id="loginPassword" required placeholder="••••••••"
+                            class="cyber-input w-full rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600" />
+                    </div>
+                    <button type="submit" id="loginSubmitBtn"
+                        class="btn-crimson w-full py-3.5 rounded-xl text-white font-extrabold text-sm cursor-pointer">
+                        دخول
+                    </button>
+                </form>
             </section>
 
             <!-- 2) Submission View (12-Column Bento Studio Workspace) -->
@@ -1739,7 +1630,6 @@
                 headerLogin: 'تسجيل دخول',
                 logoutBtn: 'خروج',
                 authHeading: 'h token',
-                authSubheading: 'سجّل دخولك للبدء',
                 authTabLogin: 'تسجيل الدخول',
                 authTabRegister: 'إنشاء حساب',
                 labelLoginUser: 'اسم المستخدم',
@@ -1750,7 +1640,6 @@
                 labelRegUser: 'اسم المستخدم (بالإنجليزي) <span class="text-red-500">*</span>',
                 labelRegPass: 'كلمة المرور <span class="text-red-500">*</span>',
                 regSubmitBtn: 'إنشاء الحساب والدخول',
-                authActivationHint: 'صفحة التفعيل',
                 formHeading: 'تسليم',
                 formSubheading: 'البيانات + الملف + صورة الفحص',
                 accountLabelPrefix: 'الاسم:',
@@ -1815,7 +1704,6 @@
                 headerLogin: 'Sign In',
                 logoutBtn: 'Logout',
                 authHeading: 'h token',
-                authSubheading: 'Sign in to continue',
                 authTabLogin: 'Sign In',
                 authTabRegister: 'Create Account',
                 labelLoginUser: 'Username',
@@ -1826,7 +1714,6 @@
                 labelRegUser: 'Username (English) <span class="text-red-500">*</span>',
                 labelRegPass: 'Password <span class="text-red-500">*</span>',
                 regSubmitBtn: 'Create Account',
-                authActivationHint: 'Activation Page',
                 formHeading: 'Submit',
                 formSubheading: 'Details + .txt file + Screenshot',
                 accountLabelPrefix: 'Name:',
@@ -2621,7 +2508,6 @@
             document.getElementById('logoutBtnText').textContent = t.logoutBtn;
 
             document.getElementById('authHeading').textContent = t.authHeading;
-            document.getElementById('authSubheading').textContent = t.authSubheading;
             document.getElementById('authTabLogin').textContent = t.authTabLogin;
             document.getElementById('authTabRegister').textContent = t.authTabRegister;
             document.getElementById('labelLoginUser').textContent = t.labelLoginUser;
@@ -2632,7 +2518,6 @@
             document.getElementById('labelRegUser').innerHTML = t.labelRegUser;
             document.getElementById('labelRegPass').innerHTML = t.labelRegPass;
             document.getElementById('regSubmitBtn').textContent = t.regSubmitBtn;
-            document.getElementById('authActivationHint').textContent = t.authActivationHint;
 
             document.getElementById('formHeading').textContent = t.formHeading;
             document.getElementById('formSubheading').textContent = t.formSubheading;
@@ -2847,6 +2732,7 @@
             document.getElementById('myVortexCard').classList.add('hidden');
             document.getElementById('vortexMainCard').classList.add('lg:col-start-4');
             updateSubmitReadiness();
+            switchAuthTab('register');
             switchPublicPage('auth');
         }
 
@@ -4290,7 +4176,7 @@
             }
         }
 
-        // --- Interactive Crimson Waves + Constellation Particle Canvas + Specular Card Rim ---
+        // --- Interactive Crimson Waves + Batched Constellation Particle Canvas + Throttled Spotlight ---
         function initCrimsonBackdrop() {
             const canvas = document.getElementById('bgFxCanvas');
             if (!canvas || typeof canvas.getContext !== 'function') return;
@@ -4300,53 +4186,88 @@
             let w = 0, h = 0, dpr = 1;
             const pointer = { x: -9999, y: -9999, tx: -9999, ty: -9999, active: false };
             const particles = [];
-            const COUNT = 38;
+
+            const makeParticle = () => ({
+                x: Math.random() * w,
+                y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.28,
+                vy: -0.18 - Math.random() * 0.38,
+                r: 1 + Math.random() * 1.9,
+                alpha: 0.25 + Math.random() * 0.55,
+                hot: Math.random() > 0.72
+            });
+
+            const syncParticles = (targetCount) => {
+                while (particles.length < targetCount) particles.push(makeParticle());
+                if (particles.length > targetCount) particles.length = targetCount;
+            };
 
             const resize = () => {
-                dpr = Math.min(window.devicePixelRatio || 1, 2);
                 w = window.innerWidth || 1280;
                 h = window.innerHeight || 720;
+                const isMobile = w < 768;
+                dpr = Math.min(window.devicePixelRatio || 1, isMobile ? 1.25 : 1.5);
                 canvas.width = Math.round(w * dpr);
                 canvas.height = Math.round(h * dpr);
                 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                syncParticles(isMobile ? 22 : 32);
             };
             resize();
 
-            for (let i = 0; i < COUNT; i++) {
-                particles.push({
-                    x: Math.random() * w,
-                    y: Math.random() * h,
-                    vx: (Math.random() - 0.5) * 0.28,
-                    vy: -0.18 - Math.random() * 0.38,
-                    r: 1 + Math.random() * 1.9,
-                    alpha: 0.25 + Math.random() * 0.55,
-                    hot: Math.random() > 0.72
-                });
-            }
-
-            window.addEventListener('resize', resize);
-            document.addEventListener('pointermove', e => {
-                pointer.tx = e.clientX;
-                pointer.ty = e.clientY;
-                pointer.active = true;
-                if (pointer.x < 0) { pointer.x = e.clientX; pointer.y = e.clientY; }
-                const card = e.target && e.target.closest ? e.target.closest('.glass-card') : null;
-                if (card) {
-                    const rect = card.getBoundingClientRect();
-                    card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-                    card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
-                }
-            }, { passive: true });
-
             const reduced = typeof window.matchMedia === 'function'
                 && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            const isCoarsePointer = typeof window.matchMedia === 'function'
+                && window.matchMedia('(pointer: coarse)').matches;
+
+            window.addEventListener('resize', resize);
+
+            if (!isCoarsePointer) {
+                let pendingCard = null;
+                let pendingX = 0;
+                let pendingY = 0;
+                let spotlightRaf = 0;
+
+                document.addEventListener('pointermove', e => {
+                    pointer.tx = e.clientX;
+                    pointer.ty = e.clientY;
+                    pointer.active = true;
+                    if (pointer.x < 0) { pointer.x = e.clientX; pointer.y = e.clientY; }
+                    const card = e.target && e.target.closest ? e.target.closest('.glass-card') : null;
+                    if (card) {
+                        pendingCard = card;
+                        pendingX = e.clientX;
+                        pendingY = e.clientY;
+                        if (!spotlightRaf && typeof window.requestAnimationFrame === 'function') {
+                            spotlightRaf = window.requestAnimationFrame(() => {
+                                spotlightRaf = 0;
+                                if (!pendingCard) return;
+                                const rect = pendingCard.getBoundingClientRect();
+                                pendingCard.style.setProperty('--mx', (pendingX - rect.left) + 'px');
+                                pendingCard.style.setProperty('--my', (pendingY - rect.top) + 'px');
+                                pendingCard = null;
+                            });
+                        }
+                    }
+                }, { passive: true });
+            }
+
             let t = 0;
+            let rafId = 0;
+
+            const scheduleNextFrame = () => {
+                if (!reduced && !document.hidden && !rafId && typeof window.requestAnimationFrame === 'function') {
+                    rafId = window.requestAnimationFrame(renderFrame);
+                }
+            };
 
             const renderFrame = () => {
+                rafId = 0;
+                if (document.hidden) return;
+
                 t += 0.012;
                 ctx.clearRect(0, 0, w, h);
 
-                if (pointer.active) {
+                if (pointer.active && !isCoarsePointer) {
                     pointer.x += (pointer.tx - pointer.x) * 0.08;
                     pointer.y += (pointer.ty - pointer.y) * 0.08;
                     const grad = ctx.createRadialGradient(pointer.x, pointer.y, 0, pointer.x, pointer.y, 260);
@@ -4373,7 +4294,7 @@
                     ctx.stroke();
                 }
 
-                // Floating Crimson Embers & Constellation Links
+                // Floating Crimson Embers
                 for (let i = 0; i < particles.length; i++) {
                     const p = particles[i];
                     if (!reduced) {
@@ -4390,43 +4311,55 @@
                         ? `rgba(255, 130, 145, ${p.alpha})`
                         : `rgba(225, 29, 72, ${p.alpha})`;
                     ctx.fill();
+                }
 
+                // Batched Constellation Links (single path/stroke pass, zero Math.sqrt)
+                ctx.beginPath();
+                for (let i = 0; i < particles.length; i++) {
+                    const p = particles[i];
                     for (let j = i + 1; j < particles.length; j++) {
                         const q = particles[j];
                         const dx = p.x - q.x;
                         const dy = p.y - q.y;
-                        const distSq = dx * dx + dy * dy;
-                        if (distSq < 19600) {
-                            const lineAlpha = (1 - Math.sqrt(distSq) / 140) * 0.14;
-                            ctx.beginPath();
+                        if (dx * dx + dy * dy < 19600) {
                             ctx.moveTo(p.x, p.y);
                             ctx.lineTo(q.x, q.y);
-                            ctx.strokeStyle = `rgba(239, 43, 67, ${lineAlpha})`;
-                            ctx.lineWidth = 0.7;
-                            ctx.stroke();
                         }
                     }
+                }
+                ctx.strokeStyle = 'rgba(239, 43, 67, 0.1)';
+                ctx.lineWidth = 0.7;
+                ctx.stroke();
 
-                    if (pointer.active) {
+                if (pointer.active && !isCoarsePointer) {
+                    ctx.beginPath();
+                    for (let i = 0; i < particles.length; i++) {
+                        const p = particles[i];
                         const dx = p.x - pointer.x;
                         const dy = p.y - pointer.y;
-                        const distSq = dx * dx + dy * dy;
-                        if (distSq < 32400) {
-                            const cursorAlpha = (1 - Math.sqrt(distSq) / 180) * 0.28;
-                            ctx.beginPath();
+                        if (dx * dx + dy * dy < 32400) {
                             ctx.moveTo(p.x, p.y);
                             ctx.lineTo(pointer.x, pointer.y);
-                            ctx.strokeStyle = `rgba(255, 95, 115, ${cursorAlpha})`;
-                            ctx.lineWidth = 0.9;
-                            ctx.stroke();
                         }
                     }
+                    ctx.strokeStyle = 'rgba(255, 95, 115, 0.2)';
+                    ctx.lineWidth = 0.9;
+                    ctx.stroke();
                 }
 
-                if (!reduced && typeof window.requestAnimationFrame === 'function') {
-                    window.requestAnimationFrame(renderFrame);
-                }
+                scheduleNextFrame();
             };
+
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    if (rafId && typeof window.cancelAnimationFrame === 'function') {
+                        window.cancelAnimationFrame(rafId);
+                    }
+                    rafId = 0;
+                } else {
+                    scheduleNextFrame();
+                }
+            });
 
             renderFrame();
         }
@@ -4435,6 +4368,7 @@
         loadLocalDb();
         initCrimsonBackdrop();
         applyLanguage('ar');
+        switchAuthTab('register');
         updateSubmitReadiness();
         setInterval(updateDynamicDate, 60000);
         restoreUserSession();
