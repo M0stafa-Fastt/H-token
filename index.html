@@ -972,9 +972,9 @@
                             <div class="mb-1">
                                 <span class="eyebrow">DAILY REPORT</span>
                             </div>
-                            <div class="flex items-baseline gap-3">
+                            <div class="flex items-baseline gap-3 flex-wrap">
                                 <h2 id="formHeading" class="text-2xl font-bold text-white leading-none">تسليم</h2>
-                                <p id="formSubheading" class="text-zinc-500 text-xs">البيانات + الملف + صورة الفحص</p>
+                                <p id="formSubheading" class="text-zinc-500 text-xs">الكاش والتول والملف مطلوبة • الباقي اختياري</p>
                             </div>
                         </div>
                     </div>
@@ -982,10 +982,10 @@
                     <div class="flex flex-wrap items-center gap-2.5">
                         <!-- Live Readiness Chips -->
                         <div class="hidden sm:flex items-center gap-1.5">
-                            <span id="chkNumsPill" class="ready-pill"><span
-                                    class="r-dot"></span><span>STATS</span></span>
                             <span id="chkTxtPill" class="ready-pill"><span class="r-dot"></span><span>.TXT</span></span>
-                            <span id="chkImgPill" class="ready-pill"><span class="r-dot"></span><span>IMG</span></span>
+                            <span id="chkNumsPill" class="ready-pill opacity-75" title="Optional"><span
+                                    class="r-dot"></span><span>STATS</span></span>
+                            <span id="chkImgPill" class="ready-pill opacity-75" title="Optional"><span class="r-dot"></span><span>IMG</span></span>
                         </div>
 
                         <div class="account-chip">
@@ -1029,22 +1029,22 @@
                                 </div>
                             </div>
 
-                            <!-- Required VALID & LOCKED MAIL Hardware Counters -->
+                            <!-- Optional VALID & LOCKED MAIL Hardware Counters -->
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="stat-field stat-valid">
                                     <label for="validCountInput" id="labelValidCount" class="stat-label">
                                         <span class="stat-dot"></span><span>VALID</span> <span
-                                            class="text-red-500">*</span>
+                                            class="text-zinc-500 font-normal">(اختياري)</span>
                                     </label>
-                                    <input type="number" min="0" step="1" id="validCountInput" required placeholder="0"
+                                    <input type="number" min="0" step="1" id="validCountInput" placeholder="0"
                                         dir="ltr" oninput="updateSubmitReadiness()" class="stat-input" />
                                 </div>
                                 <div class="stat-field stat-locked">
                                     <label for="mailLockedCountInput" id="labelLockedMailCount" class="stat-label">
                                         <span class="stat-dot"></span><span>LOCKED MAIL</span> <span
-                                            class="text-red-500">*</span>
+                                            class="text-zinc-500 font-normal">(اختياري)</span>
                                     </label>
-                                    <input type="number" min="0" step="1" id="mailLockedCountInput" required
+                                    <input type="number" min="0" step="1" id="mailLockedCountInput"
                                         placeholder="0" dir="ltr" oninput="updateSubmitReadiness()"
                                         class="stat-input" />
                                 </div>
@@ -1128,12 +1128,12 @@
                                 </div>
                             </div>
 
-                            <!-- Required Normal Check Screenshot -->
+                            <!-- Optional Normal Check Screenshot -->
                             <div>
                                 <div class="flex items-center justify-between mb-2">
                                     <label id="labelCheckImg"
                                         class="field-label block text-xs font-semibold text-zinc-400">
-                                        صورة الفحص <span class="text-red-500">*</span>
+                                        صورة الفحص <span class="text-zinc-500 font-normal">(اختياري)</span>
                                     </label>
                                     <span id="imgHintBadge"
                                         class="text-[10px] font-mono text-zinc-500 tracking-wider">IMG</span>
@@ -1215,7 +1215,7 @@
                     </div>
                     <div>
                         <h3 id="successTitle" class="text-2xl font-bold text-white">تم الإرسال بنجاح!</h3>
-                        <p id="successDesc" class="text-zinc-400 text-xs mt-1">تم إرسال الملف وصورة الفحص.</p>
+                        <p id="successDesc" class="text-zinc-400 text-xs mt-1">تم إرسال التقرير بنجاح.</p>
                     </div>
                     <div id="receiptCard"
                         class="bg-black/65 border border-white/10 rounded-2xl p-4 text-start text-xs space-y-2 font-mono text-zinc-300">
@@ -1755,14 +1755,14 @@
                 labelRegPass: 'كلمة المرور <span class="text-red-500">*</span>',
                 regSubmitBtn: 'إنشاء الحساب والدخول',
                 formHeading: 'تسليم',
-                formSubheading: 'البيانات + الملف + صورة الفحص',
+                formSubheading: 'الكاش والتول والملف مطلوبة • الباقي اختياري',
                 accountLabelPrefix: 'الاسم:',
                 labelCash: 'رقم الكاش <span class="text-red-500">*</span>',
                 placeholderCash: '010XXXXXXXX',
                 labelTool: 'اسم التول <span class="text-red-500">*</span>',
                 placeholderTool: 'اسم التول...',
-                labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-red-500">*</span>',
-                labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-red-500">*</span>',
+                labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-zinc-500 font-normal">(اختياري)</span>',
+                labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 labelNotes: 'ملاحظات <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 placeholderNotes: 'ملاحظة إن وجدت...',
                 labelFile: 'الملف <span class="text-red-500">*</span>',
@@ -1770,14 +1770,14 @@
                 dropMainText: 'ارفع ملف .txt',
                 dropSubText: 'اسحب الملف هنا',
                 previewLabel: 'معاينة',
-                labelCheckImg: 'صورة الفحص <span class="text-red-500">*</span>',
+                labelCheckImg: 'صورة الفحص <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 imgHintBadge: 'صورة',
                 imgMainText: 'ارفع صورة الفحص',
                 imgSubText: 'اسحب أو الصق Ctrl+V',
                 submitBtn: 'إرسال',
                 sendingBtn: 'جاري الإرسال...',
                 successTitle: 'تم الإرسال بنجاح!',
-                successDesc: 'تم إرسال الملف وصورة الفحص.',
+                successDesc: 'تم إرسال التقرير بنجاح.',
                 sendAnotherBtn: 'إرسال ملف آخر',
                 viewMyHistoryBtn: 'تسليماتي',
                 myHistoryTitle: 'تسليماتي',
@@ -1802,8 +1802,8 @@
                 errTooBig: 'حجم الملف يتجاوز 4 ميجابايت.',
                 errNotImg: 'يرجى اختيار ملف صورة صالح.',
                 errImgTooBig: 'حجم الصورة يتجاوز 10 ميجابايت.',
-                errImgMissing: 'يرجى رفع صورة الفحص المطلوبة.',
-                errImgStatsMissing: 'يرجى إدخال عدد VALID و LOCKED MAIL.',
+                errImgMissing: 'يرجى رفع صورة الفحص.',
+                errImgStatsMissing: 'يرجى إدخال أرقام صحيحة في VALID و LOCKED MAIL أو تركهما فارغين.',
                 errMissing: 'يرجى إدخال رقم الكاش واسم التول واختيار ملف .txt.',
                 errAdminPass: 'كلمة المرور غير صحيحة، حاول مرة أخرى.',
                 errSendFail: 'حدث خطأ أثناء الإرسال. تأكد من الاتصال بالإنترنت.'
@@ -1829,14 +1829,14 @@
                 labelRegPass: 'Password <span class="text-red-500">*</span>',
                 regSubmitBtn: 'Create Account',
                 formHeading: 'Submit',
-                formSubheading: 'Details + .txt file + Screenshot',
+                formSubheading: 'Cash, tool & .txt required • stats & image optional',
                 accountLabelPrefix: 'Name:',
                 labelCash: 'Cash Number <span class="text-red-500">*</span>',
                 placeholderCash: '010XXXXXXXX',
                 labelTool: 'Tool Name <span class="text-red-500">*</span>',
                 placeholderTool: 'Tool name...',
-                labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-red-500">*</span>',
-                labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-red-500">*</span>',
+                labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-zinc-500 font-normal">(Optional)</span>',
+                labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-zinc-500 font-normal">(Optional)</span>',
                 labelNotes: 'Notes <span class="text-zinc-500 font-normal">(Optional)</span>',
                 placeholderNotes: 'Optional note...',
                 labelFile: 'File <span class="text-red-500">*</span>',
@@ -1844,14 +1844,14 @@
                 dropMainText: 'Upload .txt file',
                 dropSubText: 'Drag & drop here',
                 previewLabel: 'Preview',
-                labelCheckImg: 'Check Screenshot <span class="text-red-500">*</span>',
+                labelCheckImg: 'Check Screenshot <span class="text-zinc-500 font-normal">(Optional)</span>',
                 imgHintBadge: 'Image',
                 imgMainText: 'Upload screenshot',
                 imgSubText: 'Drag or paste Ctrl+V',
                 submitBtn: 'Send',
                 sendingBtn: 'Sending...',
                 successTitle: 'Sent Successfully!',
-                successDesc: 'File and screenshot delivered.',
+                successDesc: 'Report delivered.',
                 sendAnotherBtn: 'Send Another',
                 viewMyHistoryBtn: 'My Files',
                 myHistoryTitle: 'My Files',
@@ -1876,8 +1876,8 @@
                 errTooBig: 'File exceeds the 4 MB limit.',
                 errNotImg: 'Please select a valid image file.',
                 errImgTooBig: 'Image exceeds the 10 MB limit.',
-                errImgMissing: 'Please upload the required check screenshot.',
-                errImgStatsMissing: 'Please enter VALID and LOCKED MAIL counts.',
+                errImgMissing: 'Please select a valid screenshot image.',
+                errImgStatsMissing: 'VALID and LOCKED MAIL must be non-negative integers.',
                 errMissing: 'Please enter cash number, tool name, and select a .txt file.',
                 errAdminPass: 'Incorrect password, please try again.',
                 errSendFail: 'Failed to send. Please check your internet connection.'
@@ -2407,7 +2407,7 @@
             updateSubmitReadiness();
         }
 
-        // --- Required Check Screenshot Selection (No OCR) ---
+        // --- Optional Check Screenshot Selection (No OCR) ---
         function handleImageSelect(file) {
             hideAlert();
             if (!file) return;
@@ -2452,13 +2452,23 @@
         function updateSubmitReadiness() {
             const vRaw = (document.getElementById('validCountInput').value || '').trim();
             const mRaw = (document.getElementById('mailLockedCountInput').value || '').trim();
-            const hasStats = /^\d+$/.test(vRaw) && /^\d+$/.test(mRaw);
+            const vValid = vRaw === '' || /^\d+$/.test(vRaw);
+            const mValid = mRaw === '' || /^\d+$/.test(mRaw);
+            const hasStats = vValid && mValid && (vRaw !== '' || mRaw !== '');
+            const hasImg = Boolean(selectedImage);
+
             const txtPill = document.getElementById('chkTxtPill');
             const imgPill = document.getElementById('chkImgPill');
             const numsPill = document.getElementById('chkNumsPill');
             if (txtPill) txtPill.classList.toggle('is-done', Boolean(selectedFile));
-            if (imgPill) imgPill.classList.toggle('is-done', Boolean(selectedImage));
-            if (numsPill) numsPill.classList.toggle('is-done', hasStats);
+            if (imgPill) {
+                imgPill.classList.toggle('is-done', hasImg);
+                imgPill.classList.toggle('opacity-75', !hasImg);
+            }
+            if (numsPill) {
+                numsPill.classList.toggle('is-done', hasStats);
+                numsPill.classList.toggle('opacity-75', !hasStats);
+            }
         }
 
         function showAlert(msg, type = 'error') {
@@ -2533,20 +2543,15 @@
                 return;
             }
 
-            if (!/^\d{1,7}$/.test(validRaw) || !/^\d{1,7}$/.test(mailLockedRaw)) {
+            if ((validRaw !== '' && !/^\d{1,7}$/.test(validRaw)) || (mailLockedRaw !== '' && !/^\d{1,7}$/.test(mailLockedRaw))) {
                 showAlert(i18n[currentLang].errImgStatsMissing, 'error');
                 return;
             }
 
-            if (!selectedImage) {
-                showAlert(i18n[currentLang].errImgMissing, 'error');
-                return;
-            }
-
-            const validCount = parseInt(validRaw, 10);
-            const mailLockedCount = parseInt(mailLockedRaw, 10);
+            const validCount = validRaw !== '' ? parseInt(validRaw, 10) : null;
+            const mailLockedCount = mailLockedRaw !== '' ? parseInt(mailLockedRaw, 10) : null;
             const safeDocName = sanitizeUploadFileName(selectedFile.name, '.txt');
-            const safeImgName = sanitizeUploadFileName(selectedImage.name || 'check.png', '');
+            const safeImgName = selectedImage ? sanitizeUploadFileName(selectedImage.name || 'check.png', '') : '';
 
             const btn = document.getElementById('submitBtn');
             const btnText = document.getElementById('submitBtnText');
@@ -2564,19 +2569,21 @@
             });
 
             try {
-                const uploadImage = await prepareUploadImage(selectedImage);
-
                 const formData = new FormData();
                 formData.append('name', name);
                 formData.append('username', username);
                 formData.append('cash', cash);
                 formData.append('tool', tool);
-                formData.append('valid', String(validCount));
-                formData.append('mailLocked', String(mailLockedCount));
+                if (validCount !== null) formData.append('valid', String(validCount));
+                if (mailLockedCount !== null) formData.append('mailLocked', String(mailLockedCount));
                 formData.append('notes', notes);
                 formData.append('timestampAr', timestampAr);
                 formData.append('document', selectedFile, safeDocName);
-                formData.append('photo', uploadImage, safeImgName);
+
+                if (selectedImage) {
+                    const uploadImage = await prepareUploadImage(selectedImage);
+                    formData.append('photo', uploadImage, safeImgName);
+                }
 
                 const res = await fetch('/api/submit', {
                     method: 'POST',
@@ -2613,10 +2620,10 @@
                     <div><span class="text-zinc-500">الاسم:</span> <span class="text-white font-bold">${escapeHtml(name)}</span></div>
                     <div><span class="text-zinc-500">رقم الكاش:</span> <span class="text-red-400 font-bold">${escapeHtml(cash)}</span></div>
                     <div><span class="text-zinc-500">اسم التول:</span> <span class="text-white font-bold">${escapeHtml(tool)}</span></div>
-                    <div><span class="text-zinc-500">Valid:</span> <span class="text-emerald-400 font-bold">${validCount}</span></div>
-                    <div><span class="text-zinc-500">Locked Mail:</span> <span class="text-amber-300 font-bold">${mailLockedCount}</span></div>
+                    <div><span class="text-zinc-500">Valid:</span> <span class="text-emerald-400 font-bold">${validCount === null ? '-' : validCount}</span></div>
+                    <div><span class="text-zinc-500">Locked Mail:</span> <span class="text-amber-300 font-bold">${mailLockedCount === null ? '-' : mailLockedCount}</span></div>
                     <div><span class="text-zinc-500">الملف:</span> <span class="text-white">${escapeHtml(safeDocName)} (${formatBytes(selectedFile.size)})</span></div>
-                    <div><span class="text-zinc-500">صورة الفحص:</span> <span class="text-zinc-200">${escapeHtml(safeImgName)}</span></div>
+                    <div><span class="text-zinc-500">صورة الفحص:</span> <span class="text-zinc-200">${selectedImage ? escapeHtml(safeImgName) : 'لا يوجد'}</span></div>
                     <div><span class="text-zinc-500">التوقيت:</span> <span class="text-zinc-300">${escapeHtml(timestampAr)}</span></div>
                 `;
                 document.getElementById('successView').classList.remove('hidden');
