@@ -305,9 +305,6 @@ async function handler(req, res) {
     if (docFile.buffer.length < 1 || docFile.buffer.length > MAX_TXT_BYTES) {
         return sendJson(res, 400, { ok: false, error: 'The .txt file must be non-empty and at most 4 MB.' });
     }
-    if (docFile.buffer.includes(0)) {
-        return sendJson(res, 400, { ok: false, error: 'Invalid binary content inside .txt file.' });
-    }
 
     const photoFile = files.photo || null;
     let detectedPhotoMime = '';
