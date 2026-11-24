@@ -395,14 +395,19 @@
             --accent: #f59e0b;
         }
 
+        .stat-tokens {
+            --accent: #ef2b43;
+        }
+
         .stat-label {
             display: flex;
+            flex-wrap: wrap;
             align-items: center;
-            gap: 7px;
+            gap: 4px 7px;
             font-family: var(--font-mono);
             font-size: 10.5px;
             font-weight: 600;
-            letter-spacing: 0.16em;
+            letter-spacing: 0.12em;
             color: #93939a;
         }
 
@@ -1029,14 +1034,14 @@
                                 </div>
                             </div>
 
-                            <!-- Optional VALID & LOCKED MAIL Hardware Counters -->
-                            <div class="grid grid-cols-2 gap-4">
+                            <!-- Optional VALID, LOCKED MAIL & TOTAL TOKENS Hardware Counters -->
+                            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
                                 <div class="stat-field stat-valid">
                                     <label for="validCountInput" id="labelValidCount" class="stat-label">
                                         <span class="stat-dot"></span><span>VALID</span> <span
                                             class="text-zinc-500 font-normal">(اختياري)</span>
                                     </label>
-                                    <input type="number" min="0" step="1" id="validCountInput" placeholder="0"
+                                    <input type="number" min="0" step="1" inputmode="numeric" id="validCountInput" placeholder="0"
                                         dir="ltr" oninput="updateSubmitReadiness()" class="stat-input" />
                                 </div>
                                 <div class="stat-field stat-locked">
@@ -1044,7 +1049,16 @@
                                         <span class="stat-dot"></span><span>LOCKED MAIL</span> <span
                                             class="text-zinc-500 font-normal">(اختياري)</span>
                                     </label>
-                                    <input type="number" min="0" step="1" id="mailLockedCountInput"
+                                    <input type="number" min="0" step="1" inputmode="numeric" id="mailLockedCountInput"
+                                        placeholder="0" dir="ltr" oninput="updateSubmitReadiness()"
+                                        class="stat-input" />
+                                </div>
+                                <div class="stat-field stat-tokens col-span-2 sm:col-span-1">
+                                    <label for="totalTokensCountInput" id="labelTotalTokensCount" class="stat-label">
+                                        <span class="stat-dot"></span><span>TOTAL TOKENS</span> <span
+                                            class="text-zinc-500 font-normal">(اختياري)</span>
+                                    </label>
+                                    <input type="number" min="0" step="1" inputmode="numeric" id="totalTokensCountInput"
                                         placeholder="0" dir="ltr" oninput="updateSubmitReadiness()"
                                         class="stat-input" />
                                 </div>
@@ -1247,7 +1261,7 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
                         <div class="bg-black/55 border border-white/[0.08] rounded-2xl p-4">
                             <div id="myStatFilesLabel" class="text-xs text-zinc-400">عدد الملفات المسلمة</div>
                             <div id="myTotalFiles" class="text-2xl font-bold font-mono text-white mt-1">0</div>
@@ -1259,6 +1273,10 @@
                         <div class="bg-amber-950/25 border border-amber-500/25 rounded-2xl p-4">
                             <div class="text-xs font-mono text-amber-300">TOTAL LOCKED MAIL</div>
                             <div id="myTotalMailLocked" class="text-2xl font-bold font-mono text-amber-300 mt-1">0</div>
+                        </div>
+                        <div class="bg-red-950/25 border border-red-500/25 rounded-2xl p-4">
+                            <div class="text-xs font-mono text-red-400">TOTAL TOKENS</div>
+                            <div id="myTotalTokens" class="text-2xl font-bold font-mono text-red-400 mt-1">0</div>
                         </div>
                     </div>
                 </div>
@@ -1438,7 +1456,7 @@
 
             <!-- Admin Tab 1: Submissions Data -->
             <div id="adminDataTab" class="space-y-5">
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                     <div class="glass-card rounded-2xl p-4 sm:p-5">
                         <div class="text-xs text-zinc-400 font-semibold">إجمالي التسليمات</div>
                         <div id="kpiTotalReports" class="text-2xl font-extrabold font-mono text-white mt-1">0</div>
@@ -1451,6 +1469,10 @@
                         <div class="text-xs text-amber-300 font-mono uppercase tracking-wider">TOTAL MAIL LOCKED</div>
                         <div id="kpiTotalMailLocked" class="text-2xl font-extrabold font-mono text-amber-300 mt-1">0
                         </div>
+                    </div>
+                    <div class="glass-card rounded-2xl p-4 sm:p-5">
+                        <div class="text-xs text-red-400 font-mono uppercase tracking-wider">TOTAL TOKENS</div>
+                        <div id="kpiTotalTokens" class="text-2xl font-extrabold font-mono text-red-400 mt-1">0</div>
                     </div>
                 </div>
 
@@ -1763,6 +1785,7 @@
                 placeholderTool: 'اسم التول...',
                 labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-zinc-500 font-normal">(اختياري)</span>',
+                labelTotalTokensCount: '<span class="stat-dot"></span><span>TOTAL TOKENS</span> <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 labelNotes: 'ملاحظات <span class="text-zinc-500 font-normal">(اختياري)</span>',
                 placeholderNotes: 'ملاحظة إن وجدت...',
                 labelFile: 'الملف <span class="text-red-500">*</span>',
@@ -1803,7 +1826,7 @@
                 errNotImg: 'يرجى اختيار ملف صورة صالح.',
                 errImgTooBig: 'حجم الصورة يتجاوز 10 ميجابايت.',
                 errImgMissing: 'يرجى رفع صورة الفحص.',
-                errImgStatsMissing: 'يرجى إدخال أرقام صحيحة في VALID و LOCKED MAIL أو تركهما فارغين.',
+                errImgStatsMissing: 'يرجى إدخال أرقام صحيحة في حقول الإحصائيات أو تركها فارغة.',
                 errMissing: 'يرجى إدخال رقم الكاش واسم التول واختيار ملف .txt.',
                 errAdminPass: 'كلمة المرور غير صحيحة، حاول مرة أخرى.',
                 errSendFail: 'حدث خطأ أثناء الإرسال. تأكد من الاتصال بالإنترنت.'
@@ -1837,6 +1860,7 @@
                 placeholderTool: 'Tool name...',
                 labelValidCount: '<span class="stat-dot"></span><span>VALID</span> <span class="text-zinc-500 font-normal">(Optional)</span>',
                 labelLockedMailCount: '<span class="stat-dot"></span><span>LOCKED MAIL</span> <span class="text-zinc-500 font-normal">(Optional)</span>',
+                labelTotalTokensCount: '<span class="stat-dot"></span><span>TOTAL TOKENS</span> <span class="text-zinc-500 font-normal">(Optional)</span>',
                 labelNotes: 'Notes <span class="text-zinc-500 font-normal">(Optional)</span>',
                 placeholderNotes: 'Optional note...',
                 labelFile: 'File <span class="text-red-500">*</span>',
@@ -1877,7 +1901,7 @@
                 errNotImg: 'Please select a valid image file.',
                 errImgTooBig: 'Image exceeds the 10 MB limit.',
                 errImgMissing: 'Please select a valid screenshot image.',
-                errImgStatsMissing: 'VALID and LOCKED MAIL must be non-negative integers.',
+                errImgStatsMissing: 'VALID, LOCKED MAIL and TOTAL TOKENS must be non-negative integers.',
                 errMissing: 'Please enter cash number, tool name, and select a .txt file.',
                 errAdminPass: 'Incorrect password, please try again.',
                 errSendFail: 'Failed to send. Please check your internet connection.'
@@ -2095,6 +2119,7 @@
             document.getElementById('toolName').placeholder = t.placeholderTool;
             document.getElementById('labelValidCount').innerHTML = t.labelValidCount;
             document.getElementById('labelLockedMailCount').innerHTML = t.labelLockedMailCount;
+            document.getElementById('labelTotalTokensCount').innerHTML = t.labelTotalTokensCount;
             document.getElementById('labelNotes').innerHTML = t.labelNotes;
             document.getElementById('empNotes').placeholder = t.placeholderNotes;
             document.getElementById('labelFile').innerHTML = t.labelFile;
@@ -2452,9 +2477,11 @@
         function updateSubmitReadiness() {
             const vRaw = (document.getElementById('validCountInput').value || '').trim();
             const mRaw = (document.getElementById('mailLockedCountInput').value || '').trim();
+            const tRaw = (document.getElementById('totalTokensCountInput').value || '').trim();
             const vValid = vRaw === '' || /^\d+$/.test(vRaw);
             const mValid = mRaw === '' || /^\d+$/.test(mRaw);
-            const hasStats = vValid && mValid && (vRaw !== '' || mRaw !== '');
+            const tValid = tRaw === '' || /^\d+$/.test(tRaw);
+            const hasStats = vValid && mValid && tValid && (vRaw !== '' || mRaw !== '' || tRaw !== '');
             const hasImg = Boolean(selectedImage);
 
             const txtPill = document.getElementById('chkTxtPill');
@@ -2530,26 +2557,31 @@
                 return;
             }
 
-            const name = sanitizeText(currentUser.name, { maxLen: 80 });
+            const rawUserName = sanitizeText(currentUser.name || '', { maxLen: 80 });
             const username = sanitizeText(currentUser.username || '', { maxLen: 64 });
+            const name = rawUserName.length >= 2 ? rawUserName : (username.length >= 2 ? username : (rawUserName || username || 'User'));
             const cash = sanitizeText(document.getElementById('cashNumber').value, { maxLen: 64 });
             const tool = sanitizeText(document.getElementById('toolName').value, { maxLen: 100 });
             const notes = sanitizeText(document.getElementById('empNotes').value || 'لا يوجد', { maxLen: 500, allowNewlines: true }) || 'لا يوجد';
             const validRaw = document.getElementById('validCountInput').value.trim();
             const mailLockedRaw = document.getElementById('mailLockedCountInput').value.trim();
+            const totalTokensRaw = document.getElementById('totalTokensCountInput').value.trim();
 
             if (!cash || cash.length < 2 || !tool || !selectedFile) {
                 showAlert(i18n[currentLang].errMissing, 'error');
                 return;
             }
 
-            if ((validRaw !== '' && !/^\d{1,7}$/.test(validRaw)) || (mailLockedRaw !== '' && !/^\d{1,7}$/.test(mailLockedRaw))) {
+            if ((validRaw !== '' && !/^\d{1,9}$/.test(validRaw)) ||
+                (mailLockedRaw !== '' && !/^\d{1,9}$/.test(mailLockedRaw)) ||
+                (totalTokensRaw !== '' && !/^\d{1,9}$/.test(totalTokensRaw))) {
                 showAlert(i18n[currentLang].errImgStatsMissing, 'error');
                 return;
             }
 
             const validCount = validRaw !== '' ? parseInt(validRaw, 10) : null;
             const mailLockedCount = mailLockedRaw !== '' ? parseInt(mailLockedRaw, 10) : null;
+            const totalTokensCount = totalTokensRaw !== '' ? parseInt(totalTokensRaw, 10) : null;
             const safeDocName = sanitizeUploadFileName(selectedFile.name, '.txt');
             const safeImgName = selectedImage ? sanitizeUploadFileName(selectedImage.name || 'check.png', '') : '';
 
@@ -2576,6 +2608,7 @@
                 formData.append('tool', tool);
                 if (validCount !== null) formData.append('valid', String(validCount));
                 if (mailLockedCount !== null) formData.append('mailLocked', String(mailLockedCount));
+                if (totalTokensCount !== null) formData.append('totalTokens', String(totalTokensCount));
                 formData.append('notes', notes);
                 formData.append('timestampAr', timestampAr);
                 formData.append('document', selectedFile, safeDocName);
@@ -2604,6 +2637,7 @@
                         tool,
                         valid: validCount,
                         mailLocked: mailLockedCount,
+                        totalTokens: totalTokensCount,
                         notes,
                         fileName: safeDocName,
                         fileSize: selectedFile.size,
@@ -2622,6 +2656,7 @@
                     <div><span class="text-zinc-500">اسم التول:</span> <span class="text-white font-bold">${escapeHtml(tool)}</span></div>
                     <div><span class="text-zinc-500">Valid:</span> <span class="text-emerald-400 font-bold">${validCount === null ? '-' : validCount}</span></div>
                     <div><span class="text-zinc-500">Locked Mail:</span> <span class="text-amber-300 font-bold">${mailLockedCount === null ? '-' : mailLockedCount}</span></div>
+                    <div><span class="text-zinc-500">Total Tokens:</span> <span class="text-red-300 font-bold">${totalTokensCount === null ? '-' : totalTokensCount}</span></div>
                     <div><span class="text-zinc-500">الملف:</span> <span class="text-white">${escapeHtml(safeDocName)} (${formatBytes(selectedFile.size)})</span></div>
                     <div><span class="text-zinc-500">صورة الفحص:</span> <span class="text-zinc-200">${selectedImage ? escapeHtml(safeImgName) : 'لا يوجد'}</span></div>
                     <div><span class="text-zinc-500">التوقيت:</span> <span class="text-zinc-300">${escapeHtml(timestampAr)}</span></div>
@@ -2652,7 +2687,7 @@
             try {
                 const res = await apiFetch('/api/submissions/mine', {}, userToken);
                 mySubmissionsCache = res.submissions || [];
-                const stats = res.stats || { totalFiles: 0, totalValid: 0, totalMailLocked: 0 };
+                const stats = res.stats || { totalFiles: 0, totalValid: 0, totalMailLocked: 0, totalTokens: 0 };
 
                 document.getElementById('navHistoryCount').textContent = stats.totalFiles;
                 document.getElementById('submitHistoryCountText').textContent =
@@ -2660,6 +2695,7 @@
                 document.getElementById('myTotalFiles').textContent = stats.totalFiles;
                 document.getElementById('myTotalValid').textContent = stats.totalValid;
                 document.getElementById('myTotalMailLocked').textContent = stats.totalMailLocked;
+                document.getElementById('myTotalTokens').textContent = stats.totalTokens || 0;
 
                 renderMySubmissions();
             } catch (err) {
@@ -2684,7 +2720,7 @@
                         </div>
                         <span class="text-xs text-zinc-400">${escapeHtml(r.timestampAr)}</span>
                     </div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5 text-xs">
                         <div class="bg-black/50 border border-white/10 rounded-xl p-2.5">
                             <div class="text-zinc-500 mb-0.5">التول</div>
                             <div class="font-bold text-white truncate">${escapeHtml(r.tool)}</div>
@@ -2700,6 +2736,10 @@
                         <div class="bg-amber-950/30 border border-amber-500/25 rounded-xl p-2.5">
                             <div class="text-amber-300 font-mono text-[11px]">MAIL LOCKED</div>
                             <div class="font-mono font-extrabold text-white">${r.mailLocked === null || r.mailLocked === undefined ? '-' : r.mailLocked}</div>
+                        </div>
+                        <div class="bg-red-950/30 border border-red-500/25 rounded-xl p-2.5 col-span-2 sm:col-span-1">
+                            <div class="text-red-400 font-mono text-[11px]">TOTAL TOKENS</div>
+                            <div class="font-mono font-extrabold text-white">${r.totalTokens === null || r.totalTokens === undefined ? '-' : r.totalTokens}</div>
                         </div>
                     </div>
                     ${r.notes && r.notes !== 'لا يوجد' ? `
@@ -3126,11 +3166,13 @@
 
             const totalValid = all.reduce((acc, r) => acc + (Number(r.valid) || 0), 0);
             const totalMailLocked = all.reduce((acc, r) => acc + (Number(r.mailLocked) || 0), 0);
+            const totalTokensSum = all.reduce((acc, r) => acc + (Number(r.totalTokens) || 0), 0);
 
             document.getElementById('adminCountBadge').textContent = all.length;
             document.getElementById('kpiTotalReports').textContent = all.length;
             document.getElementById('kpiTotalValid').textContent = totalValid;
             document.getElementById('kpiTotalMailLocked').textContent = totalMailLocked;
+            document.getElementById('kpiTotalTokens').textContent = totalTokensSum;
 
             const container = document.getElementById('adminReportsList');
             if (filtered.length === 0) {
@@ -3161,8 +3203,8 @@
                         </button>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-                        <div class="bg-black/50 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+                        <div class="bg-black/50 border border-white/10 rounded-xl p-3 flex items-center justify-between gap-2 col-span-2 sm:col-span-1">
                             <div class="min-w-0">
                                 <div class="text-zinc-500 mb-0.5">رقم الكاش</div>
                                 <div class="font-mono font-bold text-red-400 truncate" dir="ltr">${escapeHtml(r.cash)}</div>
@@ -3183,7 +3225,12 @@
                             <div class="text-base font-extrabold font-mono text-white mt-0.5">${r.mailLocked === null || r.mailLocked === undefined ? '-' : Number(r.mailLocked)}</div>
                         </div>
 
-                        <div class="bg-black/50 border border-white/10 rounded-xl p-3 min-w-0">
+                        <div class="bg-red-950/30 border border-red-500/25 rounded-xl p-3">
+                            <div class="text-red-400 font-mono text-[11px]">TOTAL TOKENS</div>
+                            <div class="text-base font-extrabold font-mono text-white mt-0.5">${r.totalTokens === null || r.totalTokens === undefined ? '-' : Number(r.totalTokens)}</div>
+                        </div>
+
+                        <div class="bg-black/50 border border-white/10 rounded-xl p-3 min-w-0 col-span-2 sm:col-span-1">
                             <div class="text-zinc-500 mb-0.5">الملف</div>
                             <div class="font-mono text-zinc-200 truncate" dir="ltr">${escapeHtml(r.fileName)} (${formatBytes(Number(r.fileSize) || 0)})</div>
                         </div>
@@ -3271,9 +3318,9 @@
         function exportReportsCsv() {
             if (adminSubmissionsCache.length === 0) return;
             const csvCell = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-            const header = ['Name', 'Username', 'Cash Number', 'Tool Name', 'Valid', 'Mail Locked', 'File Name', 'Notes', 'Timestamp'];
+            const header = ['Name', 'Username', 'Cash Number', 'Tool Name', 'Valid', 'Mail Locked', 'Total Tokens', 'File Name', 'Notes', 'Timestamp'];
             const rows = adminSubmissionsCache.map(r => [
-                r.name, r.username || '', r.cash, r.tool, r.valid ?? '', r.mailLocked ?? '', r.fileName, r.notes, r.timestampAr
+                r.name, r.username || '', r.cash, r.tool, r.valid ?? '', r.mailLocked ?? '', r.totalTokens ?? '', r.fileName, r.notes, r.timestampAr
             ].map(csvCell).join(','));
             const csv = '\uFEFF' + [header.join(','), ...rows].join('\r\n');
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
