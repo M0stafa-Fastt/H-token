@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/auth/:path*",
+      "destination": "/api/data?__route=/api/auth/:path*"
+    },
+    {
+      "source": "/api/submissions/:path*",
+      "destination": "/api/data?__route=/api/submissions/:path*"
+    },
+    {
+      "source": "/api/hwid/:path*",
+      "destination": "/api/data?__route=/api/hwid/:path*"
+    },
+    {
+      "source": "/api/vortex/:path*",
+      "destination": "/api/data?__route=/api/vortex/:path*"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "/api/data?__route=/api/admin/:path*"
+    }
+  ]
+}

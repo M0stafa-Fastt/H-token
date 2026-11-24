@@ -1712,7 +1712,6 @@
         let currentUser = null;
         let userToken = localStorage.getItem(USER_TOKEN_KEY) || '';
         let adminToken = sessionStorage.getItem(ADMIN_TOKEN_KEY) || '';
-        let adminSessionVerifiedUntil = 0;
         let adminLockTimer = null;
 
         let selectedFile = null;
@@ -1885,8 +1884,6 @@
             }
         };
 
-        const LOCAL_DB_KEY = 'h_token_db_v1';
-        const USER_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
         const ADMIN_LOGIN_MAX_ATTEMPTS = 3;
         const ADMIN_LOGIN_LOCK_MS = 15 * 60 * 1000;
         const REPORT_COOLDOWN_MS = 6000;
@@ -2020,572 +2017,27 @@
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
-        function defaultLocalDb() {
-            return {
-                users: [],
-                sessions: [],
-                submissions: [],
-                hwids: [],
-                vortexKeys: []
-            };
-        }
-
-        function localApiError(status, message) {
-            const err = new Error(message);
-            err.status = status;
-            return err;
-        }
-
-        function randomHex(bytesLen = 16) {
-            const arr = new Uint8Array(bytesLen);
-            if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-                crypto.getRandomValues(arr);
-            } else {
-                for (let i = 0; i < bytesLen; i++) arr[i] = Math.floor(Math.random() * 256);
-            }
-            return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        function genId() {
-            return Date.now().toString(36) + randomHex(4);
-        }
-
-        // Pure-JS UTF-8 SHA-256 fallback so hashing works even outside secure contexts (e.g. file://)
-        function sha256SyncHex(str) {
-            const utf8 = unescape(encodeURIComponent(String(str)));
-            const words = [];
-            for (let i = 0; i < utf8.length; i++) {
-                words[i >> 2] |= (utf8.charCodeAt(i) & 0xff) << (24 - (i % 4) * 8);
-            }
-            const bitLen = utf8.length * 8;
-            words[bitLen >> 5] |= 0x80 << (24 - (bitLen % 32));
-            words[(((bitLen + 64) >> 9) << 4) + 15] = bitLen;
-
-            const K = [
-                0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-                0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-                0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-                0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-                0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-                0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-                0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-                0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-            ];
-            let H = [0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19];
-            const rotr = (n, x) => (x >>> n) | (x << (32 - n));
-            const W = new Array(64);
-
-            for (let i = 0; i < words.length; i += 16) {
-                for (let t = 0; t < 16; t++) W[t] = words[i + t] | 0;
-                for (let t = 16; t < 64; t++) {
-                    const s0 = rotr(7, W[t - 15]) ^ rotr(18, W[t - 15]) ^ (W[t - 15] >>> 3);
-                    const s1 = rotr(17, W[t - 2]) ^ rotr(19, W[t - 2]) ^ (W[t - 2] >>> 10);
-                    W[t] = (W[t - 16] + s0 + W[t - 7] + s1) | 0;
-                }
-                let [a, b, c, d, e, f, g, h] = H;
-                for (let t = 0; t < 64; t++) {
-                    const S1 = rotr(6, e) ^ rotr(11, e) ^ rotr(25, e);
-                    const ch = (e & f) ^ ((~e) & g);
-                    const temp1 = (h + S1 + ch + K[t] + W[t]) | 0;
-                    const S0 = rotr(2, a) ^ rotr(13, a) ^ rotr(22, a);
-                    const maj = (a & b) ^ (a & c) ^ (b & c);
-                    const temp2 = (S0 + maj) | 0;
-                    h = g; g = f; f = e; e = (d + temp1) | 0;
-                    d = c; c = b; b = a; a = (temp1 + temp2) | 0;
-                }
-                H = [
-                    (H[0] + a) | 0, (H[1] + b) | 0, (H[2] + c) | 0, (H[3] + d) | 0,
-                    (H[4] + e) | 0, (H[5] + f) | 0, (H[6] + g) | 0, (H[7] + h) | 0
-                ];
-            }
-            return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
-        }
-
-        async function sha256Hex(str) {
-            const text = String(str ?? '');
-            if (typeof crypto !== 'undefined' && crypto.subtle && typeof TextEncoder !== 'undefined') {
-                try {
-                    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-                    return Array.from(new Uint8Array(buf), b => b.toString(16).padStart(2, '0')).join('');
-                } catch { }
-            }
-            return sha256SyncHex(text);
-        }
-
-        function safeEqualHex(a, b) {
-            if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
-            let diff = 0;
-            for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
-            return diff === 0;
-        }
-
-        async function hashUserPassword(password) {
-            const salt = randomHex(16);
-            let acc = `${salt}:${password}`;
-            for (let i = 0; i < 64; i++) acc = sha256SyncHex(`${salt}:${acc}`);
-            return `${salt}:${acc}`;
-        }
-
-        async function verifyUserPassword(password, stored) {
-            const parts = String(stored || '').split(':');
-            if (parts.length !== 2) return false;
-            const [salt, expected] = parts;
-            let acc = `${salt}:${password}`;
-            for (let i = 0; i < 64; i++) acc = sha256SyncHex(`${salt}:${acc}`);
-            return safeEqualHex(acc, expected);
-        }
-
-        function loadLocalDb() {
-            const def = defaultLocalDb();
-            try {
-                const raw = localStorage.getItem(LOCAL_DB_KEY);
-                if (!raw) {
-                    saveLocalDb(def);
-                    return def;
-                }
-                const parsed = JSON.parse(raw);
-                const cleaned = {
-                    users: Array.isArray(parsed.users) ? parsed.users : [],
-                    sessions: Array.isArray(parsed.sessions) ? parsed.sessions : [],
-                    submissions: Array.isArray(parsed.submissions) ? parsed.submissions : [],
-                    hwids: Array.isArray(parsed.hwids) ? parsed.hwids : [],
-                    vortexKeys: Array.isArray(parsed.vortexKeys) ? parsed.vortexKeys : []
-                };
-                if (parsed && Object.prototype.hasOwnProperty.call(parsed, 'config')) {
-                    saveLocalDb(cleaned);
-                }
-                return cleaned;
-            } catch {
-                return def;
-            }
-        }
-
-        function saveLocalDb(db) {
-            const now = Date.now();
-            db.sessions = (db.sessions || []).filter(s => s && s.role === 'user' && s.expiresAt > now);
-            try {
-                localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(db));
-            } catch (err) {
-                // Trim oldest cached .txt file contents first if browser localStorage quota is nearly full
-                for (let i = (db.submissions || []).length - 1; i >= 0; i--) {
-                    if (db.submissions[i].fileContent) {
-                        db.submissions[i].fileContent = '';
-                        db.submissions[i].fileTruncated = true;
-                        try {
-                            localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(db));
-                            return;
-                        } catch { }
-                    }
-                }
-                throw localApiError(507, 'مساحة التخزين في المتصفح ممتلئة.');
-            }
-        }
-
-        function createLocalSession(db, role, userId = null) {
-            const token = randomHex(24);
-            db.sessions.push({
-                token,
-                role: 'user',
-                userId,
-                createdAt: new Date().toISOString(),
-                expiresAt: Date.now() + USER_SESSION_TTL_MS
-            });
-            return token;
-        }
-
-        function getLocalSession(db, token, role) {
-            if (!token) return null;
-            if (role === 'admin') {
-                if (!adminToken || token !== adminToken || Date.now() >= adminSessionVerifiedUntil) {
-                    return null;
-                }
-                return { session: { token, role: 'admin', expiresAt: adminSessionVerifiedUntil } };
-            }
-            const now = Date.now();
-            const session = db.sessions.find(s => s.token === token && s.role === 'user' && s.expiresAt > now);
-            if (!session) return null;
-            const user = db.users.find(u => u.id === session.userId);
-            return user ? { session, user } : null;
-        }
-
-        function publicUser(user) {
-            return { id: user.id, name: user.name, username: user.username, createdAt: user.createdAt };
-        }
-
         async function apiFetch(url, options = {}, token = '') {
-            const urlObj = new URL(url, 'http://local.app');
-            const pathname = urlObj.pathname;
-            const searchParams = urlObj.searchParams;
-            const method = String(options.method || 'GET').toUpperCase();
-            let body = {};
-            if (options.body) {
-                try { body = JSON.parse(options.body); } catch { throw localApiError(400, 'تنسيق البيانات غير صالح.'); }
+            const headers = Object.assign({}, options.headers || {});
+            if (options.body && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
 
-            const db = loadLocalDb();
-
-            // --- User Auth ---
-            if (pathname === '/api/auth/register' && method === 'POST') {
-                const name = sanitizeText(body.name, { maxLen: 60 });
-                const username = sanitizeText(body.username, { maxLen: 32 }).toLowerCase();
-                const password = String(body.password || '');
-
-                if (name.length < 2 || name.length > 60) {
-                    throw localApiError(400, 'الاسم يجب أن يكون من 2 إلى 60 حرفاً.');
-                }
-                if (!/^[a-z0-9_.-]{3,32}$/.test(username)) {
-                    throw localApiError(400, 'اسم المستخدم يجب أن يكون بالإنجليزية (3 إلى 32 حرف/رقم بدون مسافات).');
-                }
-                if (password.length < 4 || password.length > 128) {
-                    throw localApiError(400, 'كلمة المرور يجب أن تكون 4 أحرف على الأقل.');
-                }
-                if (db.users.some(u => u.username === username)) {
-                    throw localApiError(409, 'اسم المستخدم مسجل بالفعل، اختر اسماً آخر.');
-                }
-
-                const nowIso = new Date().toISOString();
-                const user = {
-                    id: genId(),
-                    name,
-                    username,
-                    passwordHash: await hashUserPassword(password),
-                    createdAt: nowIso,
-                    lastLoginAt: nowIso
-                };
-                db.users.push(user);
-                const newToken = createLocalSession(db, 'user', user.id);
-                saveLocalDb(db);
-                return { token: newToken, user: publicUser(user) };
+            const res = await fetch(url, Object.assign({}, options, {
+                credentials: 'same-origin',
+                headers
+            }));
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                const err = new Error(data.error || data.message || `HTTP ${res.status}`);
+                err.status = res.status;
+                err.data = data;
+                throw err;
             }
-
-            if (pathname === '/api/auth/login' && method === 'POST') {
-                const username = sanitizeText(body.username, { maxLen: 32 }).toLowerCase();
-                const password = String(body.password || '');
-                const user = db.users.find(u => u.username === username);
-                if (!user || !(await verifyUserPassword(password, user.passwordHash))) {
-                    throw localApiError(401, 'اسم المستخدم أو كلمة المرور غير صحيحة.');
-                }
-                user.lastLoginAt = new Date().toISOString();
-                const newToken = createLocalSession(db, 'user', user.id);
-                saveLocalDb(db);
-                return { token: newToken, user: publicUser(user) };
-            }
-
-            if (pathname === '/api/auth/me' && method === 'GET') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'غير مسجل الدخول.');
-                if (!auth.user.lastLoginAt) {
-                    auth.user.lastLoginAt = auth.session.createdAt || auth.user.createdAt;
-                    saveLocalDb(db);
-                }
-                return { user: publicUser(auth.user) };
-            }
-
-            if (pathname === '/api/auth/logout' && method === 'POST') {
-                if (token) {
-                    db.sessions = db.sessions.filter(s => s.token !== token);
-                    saveLocalDb(db);
-                }
-                return { ok: true };
-            }
-
-            // --- User Submissions ---
-            if (pathname === '/api/submissions/mine' && method === 'GET') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'يرجى تسجيل الدخول أولاً.');
-                const mine = db.submissions.filter(s => s.userId === auth.user.id);
-                const totalValid = mine.reduce((acc, s) => acc + (typeof s.valid === 'number' ? s.valid : 0), 0);
-                const totalMailLocked = mine.reduce((acc, s) => acc + (typeof s.mailLocked === 'number' ? s.mailLocked : 0), 0);
-                return {
-                    submissions: mine,
-                    stats: { totalFiles: mine.length, totalValid, totalMailLocked }
-                };
-            }
-
-            if (pathname === '/api/submissions' && method === 'POST') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'يرجى تسجيل الدخول أولاً.');
-                const cash = sanitizeText(body.cash, { maxLen: 64 });
-                const tool = sanitizeText(body.tool, { maxLen: 100 });
-                const fileName = sanitizeUploadFileName(body.fileName, '.txt');
-                const fileSize = Number(body.fileSize) || 0;
-                const notes = sanitizeText(body.notes || 'لا يوجد', { maxLen: 500, allowNewlines: true }) || 'لا يوجد';
-                const timestampAr = sanitizeText(body.timestampAr, { maxLen: 120 }) || new Date().toLocaleString('ar-EG');
-
-                if (!cash || !tool || !fileName) {
-                    throw localApiError(400, 'بيانات التسليم غير مكتملة.');
-                }
-
-                const valid = body.valid === null || body.valid === undefined ? null : Number(body.valid);
-                const mailLocked = body.mailLocked === null || body.mailLocked === undefined ? null : Number(body.mailLocked);
-                if ((valid !== null && (!Number.isInteger(valid) || valid < 0)) ||
-                    (mailLocked !== null && (!Number.isInteger(mailLocked) || mailLocked < 0))) {
-                    throw localApiError(400, 'قيم الفحص غير صالحة.');
-                }
-
-                const rawContent = String(body.fileContent || '');
-                const record = {
-                    id: genId(),
-                    userId: auth.user.id,
-                    username: auth.user.username,
-                    name: auth.user.name,
-                    cash,
-                    tool,
-                    valid,
-                    mailLocked,
-                    notes,
-                    fileName,
-                    fileSize,
-                    fileContent: rawContent.slice(0, MAX_STORED_TXT_CHARS),
-                    fileTruncated: Boolean(body.fileTruncated) || rawContent.length > MAX_STORED_TXT_CHARS,
-                    timestampAr,
-                    createdAt: new Date().toISOString()
-                };
-                db.submissions.unshift(record);
-                saveLocalDb(db);
-                return { ok: true, submission: record };
-            }
-
-            // --- User HWID Activation Requests ---
-            if (pathname === '/api/hwid/request' && method === 'POST') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'يرجى تسجيل الدخول أولاً.');
-
-                const hwid = sanitizeText(body.hwid, { maxLen: 200 });
-                const tool = sanitizeText(body.tool, { maxLen: 80 });
-                if (hwid.length < 4 || hwid.length > 200) {
-                    throw localApiError(400, 'يرجى إدخال كود HWID صحيح.');
-                }
-                if (tool.length < 1 || tool.length > 80) {
-                    throw localApiError(400, 'يرجى إدخال اسم التول.');
-                }
-
-                const existing = db.hwids.find(h =>
-                    h.hwid.toLowerCase() === hwid.toLowerCase() &&
-                    String(h.tool || '').toLowerCase() === tool.toLowerCase()
-                );
-                if (existing) {
-                    return { ok: true, duplicate: true, record: existing };
-                }
-
-                const record = {
-                    id: genId(),
-                    userId: auth.user.id,
-                    userName: auth.user.name,
-                    username: auth.user.username,
-                    hwid,
-                    tool,
-                    status: 'pending',
-                    createdAt: new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                db.hwids.unshift(record);
-                saveLocalDb(db);
-                return { ok: true, duplicate: false, record };
-            }
-
-            if (pathname === '/api/hwid/mine' && method === 'GET') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'غير مسجل الدخول.');
-                return { hwids: db.hwids.filter(h => h.userId === auth.user.id) };
-            }
-
-            // --- Vortex Keys ---
-            if (pathname === '/api/vortex/status' && method === 'GET') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'يرجى تسجيل الدخول أولاً.');
-                const availableCount = db.vortexKeys.filter(k => k.status === 'available').length;
-                const myKeys = db.vortexKeys
-                    .filter(k => k.claimedByUserId === auth.user.id)
-                    .sort((a, b) => String(b.claimedAt || '').localeCompare(String(a.claimedAt || '')));
-                return { availableCount, myKeys };
-            }
-
-            if (pathname === '/api/vortex/claim' && method === 'POST') {
-                const auth = getLocalSession(db, token, 'user');
-                if (!auth) throw localApiError(401, 'يرجى تسجيل الدخول أولاً.');
-                const nextKey = db.vortexKeys.find(k => k.status === 'available');
-                if (!nextKey) {
-                    throw localApiError(409, 'غير متوفر الآن');
-                }
-                nextKey.status = 'claimed';
-                nextKey.claimedByUserId = auth.user.id;
-                nextKey.claimedByName = auth.user.name;
-                nextKey.claimedByUsername = auth.user.username;
-                nextKey.claimedAt = new Date().toISOString();
-                const availableCount = db.vortexKeys.filter(k => k.status === 'available').length;
-                saveLocalDb(db);
-                return { ok: true, key: nextKey, availableCount };
-            }
-
-            // --- Admin Protected Endpoints (Authenticated via /api/login) ---
-            if (pathname.startsWith('/api/admin/')) {
-                const adminAuth = getLocalSession(db, token, 'admin');
-                if (!adminAuth) {
-                    throw localApiError(401, 'انتهت جلسة الأدمن أو غير مصرح.');
-                }
-
-                if (pathname === '/api/admin/submissions' && method === 'GET') {
-                    return { submissions: db.submissions };
-                }
-
-                if (pathname === '/api/admin/submissions' && method === 'DELETE') {
-                    db.submissions = [];
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                const subMatch = pathname.match(/^\/api\/admin\/submissions\/([^/]+)$/);
-                if (subMatch && method === 'DELETE') {
-                    const id = decodeURIComponent(subMatch[1]);
-                    db.submissions = db.submissions.filter(s => s.id !== id);
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                if (pathname === '/api/admin/hwids' && method === 'GET') {
-                    return { hwids: db.hwids };
-                }
-
-                const hwidMatch = pathname.match(/^\/api\/admin\/hwids\/([^/]+)$/);
-                if (hwidMatch && method === 'PATCH') {
-                    const id = decodeURIComponent(hwidMatch[1]);
-                    const nextStatus = String(body.status || '');
-                    if (!['pending', 'active', 'rejected'].includes(nextStatus)) {
-                        throw localApiError(400, 'حالة غير صالحة.');
-                    }
-                    const item = db.hwids.find(h => h.id === id);
-                    if (!item) throw localApiError(404, 'الطلب غير موجود.');
-                    item.status = nextStatus;
-                    item.updatedAt = new Date().toISOString();
-                    saveLocalDb(db);
-                    return { ok: true, record: item };
-                }
-
-                if (hwidMatch && method === 'DELETE') {
-                    const id = decodeURIComponent(hwidMatch[1]);
-                    db.hwids = db.hwids.filter(h => h.id !== id);
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                if (pathname === '/api/admin/vortex' && method === 'GET') {
-                    return { keys: db.vortexKeys };
-                }
-
-                if (pathname === '/api/admin/vortex' && method === 'POST') {
-                    const rawLines = Array.isArray(body.keys)
-                        ? body.keys
-                        : String(body.keysText || '').split(/[\r\n,]+/);
-                    const existingSet = new Set(db.vortexKeys.map(k => k.key));
-                    let addedCount = 0;
-                    let skippedDuplicates = 0;
-
-                    for (const raw of rawLines) {
-                        const key = String(raw || '').trim();
-                        if (!key) continue;
-                        if (existingSet.has(key)) {
-                            skippedDuplicates++;
-                            continue;
-                        }
-                        existingSet.add(key);
-                        db.vortexKeys.push({
-                            id: genId(),
-                            key,
-                            status: 'available',
-                            createdAt: new Date().toISOString(),
-                            claimedByUserId: null,
-                            claimedByName: '',
-                            claimedByUsername: '',
-                            claimedAt: null
-                        });
-                        addedCount++;
-                    }
-
-                    if (addedCount === 0 && skippedDuplicates === 0) {
-                        throw localApiError(400, 'يرجى إدخال كيي واحد على الأقل.');
-                    }
-                    saveLocalDb(db);
-                    return { ok: true, addedCount, skippedDuplicates, keys: db.vortexKeys };
-                }
-
-                if (pathname === '/api/admin/vortex' && method === 'DELETE') {
-                    const scope = String(searchParams.get('scope') || 'all');
-                    db.vortexKeys = scope === 'available'
-                        ? db.vortexKeys.filter(k => k.status !== 'available')
-                        : [];
-                    saveLocalDb(db);
-                    return { ok: true, keys: db.vortexKeys };
-                }
-
-                const vortexMatch = pathname.match(/^\/api\/admin\/vortex\/([^/]+)$/);
-                if (vortexMatch && method === 'DELETE') {
-                    const id = decodeURIComponent(vortexMatch[1]);
-                    db.vortexKeys = db.vortexKeys.filter(k => k.id !== id);
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                if (pathname === '/api/admin/users' && method === 'GET') {
-                    const now = Date.now();
-                    const users = db.users.map(u => {
-                        const userSubs = db.submissions.filter(s => s.userId === u.id);
-                        const userHwids = db.hwids.filter(h => h.userId === u.id);
-                        const activeSessions = db.sessions.filter(
-                            s => s.role === 'user' && s.userId === u.id && s.expiresAt > now
-                        ).length;
-                        return {
-                            id: u.id,
-                            name: u.name,
-                            username: u.username,
-                            createdAt: u.createdAt,
-                            lastLoginAt: u.lastLoginAt || null,
-                            hasActiveSession: activeSessions > 0,
-                            activeSessions,
-                            submissionsCount: userSubs.length,
-                            totalValid: userSubs.reduce((acc, s) => acc + (typeof s.valid === 'number' ? s.valid : 0), 0),
-                            totalMailLocked: userSubs.reduce((acc, s) => acc + (typeof s.mailLocked === 'number' ? s.mailLocked : 0), 0),
-                            lastSubmissionAt: userSubs[0] ? userSubs[0].createdAt : null,
-                            lastSubmissionAr: userSubs[0] ? userSubs[0].timestampAr : '',
-                            hwidsCount: userHwids.length
-                        };
-                    }).sort((a, b) => String(b.lastLoginAt || b.createdAt).localeCompare(String(a.lastLoginAt || a.createdAt)));
-                    return { users };
-                }
-
-                const userPassMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)\/password$/);
-                if (userPassMatch && method === 'PATCH') {
-                    const id = decodeURIComponent(userPassMatch[1]);
-                    const newPassword = String(body.password || '');
-                    if (newPassword.length < 4 || newPassword.length > 128) {
-                        throw localApiError(400, 'كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل.');
-                    }
-                    const user = db.users.find(u => u.id === id);
-                    if (!user) throw localApiError(404, 'المستخدم غير موجود.');
-                    user.passwordHash = await hashUserPassword(newPassword);
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                const userLogoutMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)\/logout$/);
-                if (userLogoutMatch && method === 'POST') {
-                    const id = decodeURIComponent(userLogoutMatch[1]);
-                    db.sessions = db.sessions.filter(s => !(s.role === 'user' && s.userId === id));
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-
-                const userDelMatch = pathname.match(/^\/api\/admin\/users\/([^/]+)$/);
-                if (userDelMatch && method === 'DELETE') {
-                    const id = decodeURIComponent(userDelMatch[1]);
-                    db.users = db.users.filter(u => u.id !== id);
-                    db.sessions = db.sessions.filter(s => !(s.role === 'user' && s.userId === id));
-                    saveLocalDb(db);
-                    return { ok: true };
-                }
-            }
-
-            throw localApiError(404, 'المسار غير موجود.');
+            return data;
         }
 
         function escapeHtml(str) {
@@ -3515,13 +2967,11 @@
                     });
                     const verifyData = await verifyRes.json().catch(() => ({ ok: false }));
                     if (verifyRes.ok && verifyData.ok && verifyData.authenticated) {
-                        adminSessionVerifiedUntil = verifyData.expiresAt || (Date.now() + 12 * 3600 * 1000);
                         await showAdminDashboard();
                         return;
                     }
                 } catch { }
                 adminToken = '';
-                adminSessionVerifiedUntil = 0;
                 sessionStorage.removeItem(ADMIN_TOKEN_KEY);
             }
             document.getElementById('adminUserInput').value = '';
@@ -3595,7 +3045,6 @@
                 resetClientRateLimit('admin_login');
                 stopAdminLockTimer();
                 adminToken = data.token;
-                adminSessionVerifiedUntil = data.expiresAt || (Date.now() + 12 * 3600 * 1000);
                 sessionStorage.setItem(ADMIN_TOKEN_KEY, adminToken);
                 userInput.value = '';
                 passInput.value = '';
@@ -3634,7 +3083,6 @@
         function lockAdminSession() {
             fetch('/api/login', { method: 'DELETE', credentials: 'same-origin' }).catch(() => { });
             adminToken = '';
-            adminSessionVerifiedUntil = 0;
             sessionStorage.removeItem(ADMIN_TOKEN_KEY);
             exitAdminPage();
         }
@@ -4489,8 +3937,7 @@
             renderFrame();
         }
 
-        // Initialize & scrub any legacy localStorage config
-        loadLocalDb();
+        // Initialize
         initCrimsonBackdrop();
         applyLanguage('ar');
         switchAuthTab('register');
