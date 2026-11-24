@@ -1822,6 +1822,7 @@
                 vortexUnavailable: 'غير متوفر الآن',
                 footerText: 'h token',
                 errNotTxt: 'يُسمح بملفات .txt فقط.',
+                errEmptyTxt: 'ملف الـ .txt فارغ (0 بايت). يرجى اختيار ملف غير فارغ.',
                 errTooBig: 'حجم الملف يتجاوز 4 ميجابايت.',
                 errNotImg: 'يرجى اختيار ملف صورة صالح.',
                 errImgTooBig: 'حجم الصورة يتجاوز 10 ميجابايت.',
@@ -1897,6 +1898,7 @@
                 vortexUnavailable: 'Not available right now',
                 footerText: 'h token',
                 errNotTxt: 'Only .txt files are allowed.',
+                errEmptyTxt: 'The .txt file is empty (0 bytes). Please choose a non-empty file.',
                 errTooBig: 'File exceeds the 4 MB limit.',
                 errNotImg: 'Please select a valid image file.',
                 errImgTooBig: 'Image exceeds the 10 MB limit.',
@@ -2396,6 +2398,11 @@
                 document.getElementById('fileInput').value = '';
                 return;
             }
+            if (!file.size || file.size <= 0) {
+                showAlert(i18n[currentLang].errEmptyTxt, 'error');
+                document.getElementById('fileInput').value = '';
+                return;
+            }
             if (file.size > MAX_FILE_SIZE_BYTES) {
                 showAlert(i18n[currentLang].errTooBig, 'error');
                 document.getElementById('fileInput').value = '';
@@ -2407,14 +2414,29 @@
             document.getElementById('selectedFileName').textContent = file.name;
             document.getElementById('selectedFileSize').textContent = formatBytes(file.size);
 
-            const reader = new FileReader();
-            reader.onload = function (e) {
-                const text = e.target.result || '';
-                selectedFileTextTruncated = text.length > MAX_STORED_TXT_CHARS;
-                selectedFileText = text.slice(0, MAX_STORED_TXT_CHARS);
-                document.getElementById('filePreviewBox').textContent = text.slice(0, 600) + (text.length > 600 ? '\n...' : '');
-            };
-            reader.readAsText(file);
+            const previewBox = document.getElementById('filePreviewBox');
+            if (previewBox) previewBox.textContent = file.name + ' (' + formatBytes(file.size) + ')';
+            if (typeof FileReader === 'function') {
+                try {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const text = (e && e.target && typeof e.target.result === 'string') ? e.target.result : '';
+                        selectedFileTextTruncated = text.length > MAX_STORED_TXT_CHARS;
+                        selectedFileText = text.slice(0, MAX_STORED_TXT_CHARS);
+                        if (previewBox) {
+                            previewBox.textContent = text ? (text.slice(0, 600) + (text.length > 600 ? '\n...' : '')) : (file.name + ' (' + formatBytes(file.size) + ')');
+                        }
+                    };
+                    reader.onerror = function () {
+                        selectedFileText = '';
+                        selectedFileTextTruncated = false;
+                    };
+                    reader.readAsText(file);
+                } catch {
+                    selectedFileText = '';
+                    selectedFileTextTruncated = false;
+                }
+            }
 
             document.getElementById('dropEmptyState').classList.add('hidden');
             document.getElementById('dropSelectedState').classList.remove('hidden');
@@ -2569,6 +2591,18 @@
 
             if (!cash || cash.length < 2 || !tool || !selectedFile) {
                 showAlert(i18n[currentLang].errMissing, 'error');
+                return;
+            }
+            if (!selectedFile.name || !selectedFile.name.toLowerCase().endsWith('.txt')) {
+                showAlert(i18n[currentLang].errNotTxt, 'error');
+                return;
+            }
+            if (!selectedFile.size || selectedFile.size <= 0) {
+                showAlert(i18n[currentLang].errEmptyTxt, 'error');
+                return;
+            }
+            if (selectedFile.size > MAX_FILE_SIZE_BYTES) {
+                showAlert(i18n[currentLang].errTooBig, 'error');
                 return;
             }
 
