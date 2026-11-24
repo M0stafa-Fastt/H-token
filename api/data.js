@@ -498,12 +498,20 @@ module.exports = async function handler(req, res) {
                 return sendJson(res, 400, { ok: false, error: 'بيانات التسليم غير مكتملة.' });
             }
 
-            const valid = body.valid === null || body.valid === undefined ? null : Number(body.valid);
-            const mailLocked = body.mailLocked === null || body.mailLocked === undefined ? null : Number(body.mailLocked);
-            if ((valid !== null && (!Number.isInteger(valid) || valid < 0)) ||
-                (mailLocked !== null && (!Number.isInteger(mailLocked) || mailLocked < 0))) {
+            const parseOptionalCount = (raw) => {
+                if (raw === null || raw === undefined) return { ok: true, value: null };
+                const trimmed = String(raw).trim();
+                if (trimmed === '') return { ok: true, value: null };
+                if (!/^\d{1,7}$/.test(trimmed)) return { ok: false, value: null };
+                return { ok: true, value: parseInt(trimmed, 10) };
+            };
+            const parsedValid = parseOptionalCount(body.valid);
+            const parsedMailLocked = parseOptionalCount(body.mailLocked);
+            if (!parsedValid.ok || !parsedMailLocked.ok) {
                 return sendJson(res, 400, { ok: false, error: 'قيم الفحص غير صالحة.' });
             }
+            const valid = parsedValid.value;
+            const mailLocked = parsedMailLocked.value;
 
             const rawContent = String(body.fileContent || '');
             const record = {

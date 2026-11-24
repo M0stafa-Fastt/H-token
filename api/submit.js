@@ -249,18 +249,24 @@ module.exports = async function handler(req, res) {
     const cash = sanitizeText(fields.cash, { maxLen: 64 });
     const tool = sanitizeText(fields.tool, { maxLen: 100 });
     const notes = sanitizeText(fields.notes || 'لا يوجد', { maxLen: 500, allowNewlines: true }) || 'لا يوجد';
-    const validRaw = String(fields.valid ?? fields.validCount ?? '').trim();
-    const mailLockedRaw = String(fields.mailLocked ?? fields.mailLockedCount ?? '').trim();
+    const validRaw = fields.valid !== undefined && fields.valid !== null
+        ? String(fields.valid).trim()
+        : (fields.validCount !== undefined && fields.validCount !== null ? String(fields.validCount).trim() : '');
+    const mailLockedRaw = fields.mailLocked !== undefined && fields.mailLocked !== null
+        ? String(fields.mailLocked).trim()
+        : (fields.mailLockedCount !== undefined && fields.mailLockedCount !== null ? String(fields.mailLockedCount).trim() : '');
 
     if (name.length < 2 || cash.length < 2 || tool.length < 1) {
         return sendJson(res, 400, { ok: false, error: 'Missing required report fields (name, cash, tool).' });
     }
-    if (!/^\d{1,7}$/.test(validRaw) || !/^\d{1,7}$/.test(mailLockedRaw)) {
+    if ((validRaw !== '' && !/^\d{1,7}$/.test(validRaw)) || (mailLockedRaw !== '' && !/^\d{1,7}$/.test(mailLockedRaw))) {
         return sendJson(res, 400, { ok: false, error: 'Valid and Locked Mail counts must be non-negative integers.' });
     }
 
-    const validCount = parseInt(validRaw, 10);
-    const mailLockedCount = parseInt(mailLockedRaw, 10);
+    const validCount = validRaw !== '' ? parseInt(validRaw, 10) : null;
+    const mailLockedCount = mailLockedRaw !== '' ? parseInt(mailLockedRaw, 10) : null;
+    const validDisplay = validCount === null ? '-' : String(validCount);
+    const mailLockedDisplay = mailLockedCount === null ? '-' : String(mailLockedCount);
 
     const docFile = files.document;
     if (!docFile || !Buffer.isBuffer(docFile.buffer)) {
@@ -300,7 +306,7 @@ module.exports = async function handler(req, res) {
         minute: '2-digit'
     });
 
-    const statsBlock = `\n<b>Valid /</b>\n<code>${escapeTelegramHtml(validCount)}</code>\n\n<b>Locked Mail /</b>\n<code>${escapeTelegramHtml(mailLockedCount)}</code>\n`;
+    const statsBlock = `\n<b>Valid /</b>\n<code>${escapeTelegramHtml(validDisplay)}</code>\n\n<b>Locked Mail /</b>\n<code>${escapeTelegramHtml(mailLockedDisplay)}</code>\n`;
     const caption =
         `<b>تقرير عمل يومي جديد</b>
 ────────────────────
@@ -339,7 +345,7 @@ ${escapeTelegramHtml(notes)}`;
         const docMessageId = docRes.data && docRes.data.result ? docRes.data.result.message_id : null;
 
         if (photoFile && detectedPhotoMime) {
-            const imgCaption = `<b>صورة الفحص</b> — ${escapeTelegramHtml(name)} (${escapeTelegramHtml(tool)})\nValid: <code>${validCount}</code> | Locked Mail: <code>${mailLockedCount}</code>`;
+            const imgCaption = `<b>صورة الفحص</b> — ${escapeTelegramHtml(name)} (${escapeTelegramHtml(tool)})\nValid: <code>${escapeTelegramHtml(validDisplay)}</code> | Locked Mail: <code>${escapeTelegramHtml(mailLockedDisplay)}</code>`;
             const photoFd = new FormData();
             photoFd.append('chat_id', chatId);
             photoFd.append('photo', new Blob([photoFile.buffer], { type: detectedPhotoMime }), safePhotoName);
