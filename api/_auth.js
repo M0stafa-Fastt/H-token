@@ -172,6 +172,11 @@ function readRawBody(req, maxBytes = 4718592) {
         if (req.body.length > maxBytes) return Promise.reject(createApiError(413, 'Request payload too large.'));
         return Promise.resolve(req.body);
     }
+    if (typeof req.body === 'string' && req.readableEnded) {
+        const buf = Buffer.from(req.body, 'latin1');
+        if (buf.length > maxBytes) return Promise.reject(createApiError(413, 'Request payload too large.'));
+        return Promise.resolve(buf);
+    }
 
     return new Promise((resolve, reject) => {
         const chunks = [];

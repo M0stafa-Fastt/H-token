@@ -227,7 +227,12 @@ module.exports = async function handler(req, res) {
             const db = await loadKvDb();
 
             if (pathname === '/api/admin/submissions' && method === 'GET') {
-                return sendJson(res, 200, { submissions: db.submissions });
+                return sendJson(res, 200, {
+                    submissions: db.submissions.map(s => ({
+                        ...s,
+                        totalTokens: typeof s.totalTokens === 'number' ? s.totalTokens : null
+                    }))
+                });
             }
 
             if (pathname === '/api/admin/submissions' && method === 'DELETE') {
@@ -348,6 +353,7 @@ module.exports = async function handler(req, res) {
                         submissionsCount: userSubs.length,
                         totalValid: userSubs.reduce((acc, s) => acc + (typeof s.valid === 'number' ? s.valid : 0), 0),
                         totalMailLocked: userSubs.reduce((acc, s) => acc + (typeof s.mailLocked === 'number' ? s.mailLocked : 0), 0),
+                        totalTokens: userSubs.reduce((acc, s) => acc + (typeof s.totalTokens === 'number' ? s.totalTokens : 0), 0),
                         lastSubmissionAt: userSubs[0] ? userSubs[0].createdAt : null,
                         lastSubmissionAr: userSubs[0] ? userSubs[0].timestampAr : '',
                         hwidsCount: userHwids.length
@@ -471,12 +477,15 @@ module.exports = async function handler(req, res) {
             if (!auth) {
                 return sendJson(res, 401, { ok: false, error: 'يرجى تسجيل الدخول أولاً.' });
             }
-            const mine = db.submissions.filter(s => s.userId === auth.user.id);
+            const mine = db.submissions
+                .filter(s => s.userId === auth.user.id)
+                .map(s => ({ ...s, totalTokens: typeof s.totalTokens === 'number' ? s.totalTokens : null }));
             const totalValid = mine.reduce((acc, s) => acc + (typeof s.valid === 'number' ? s.valid : 0), 0);
             const totalMailLocked = mine.reduce((acc, s) => acc + (typeof s.mailLocked === 'number' ? s.mailLocked : 0), 0);
+            const totalTokens = mine.reduce((acc, s) => acc + (typeof s.totalTokens === 'number' ? s.totalTokens : 0), 0);
             return sendJson(res, 200, {
                 submissions: mine,
-                stats: { totalFiles: mine.length, totalValid, totalMailLocked }
+                stats: { totalFiles: mine.length, totalValid, totalMailLocked, totalTokens }
             });
         }
 
@@ -502,16 +511,18 @@ module.exports = async function handler(req, res) {
                 if (raw === null || raw === undefined) return { ok: true, value: null };
                 const trimmed = String(raw).trim();
                 if (trimmed === '') return { ok: true, value: null };
-                if (!/^\d{1,7}$/.test(trimmed)) return { ok: false, value: null };
+                if (!/^\d{1,9}$/.test(trimmed)) return { ok: false, value: null };
                 return { ok: true, value: parseInt(trimmed, 10) };
             };
             const parsedValid = parseOptionalCount(body.valid);
             const parsedMailLocked = parseOptionalCount(body.mailLocked);
-            if (!parsedValid.ok || !parsedMailLocked.ok) {
+            const parsedTotalTokens = parseOptionalCount(body.totalTokens);
+            if (!parsedValid.ok || !parsedMailLocked.ok || !parsedTotalTokens.ok) {
                 return sendJson(res, 400, { ok: false, error: 'قيم الفحص غير صالحة.' });
             }
             const valid = parsedValid.value;
             const mailLocked = parsedMailLocked.value;
+            const totalTokens = parsedTotalTokens.value;
 
             const rawContent = String(body.fileContent || '');
             const record = {
@@ -523,6 +534,7 @@ module.exports = async function handler(req, res) {
                 tool,
                 valid,
                 mailLocked,
+                totalTokens,
                 notes,
                 fileName,
                 fileSize,

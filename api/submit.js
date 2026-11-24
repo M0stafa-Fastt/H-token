@@ -76,11 +76,11 @@ function detectImageMime(buf) {
 }
 
 function parseMultipartFormData(rawBuf, contentType) {
-    const match = String(contentType || '').match(/boundary=(?:"([^"]+)"|([^;\s]+))/i);
+    const match = String(contentType || '').match(/boundary=(?:"([^"]+)"|([^;\s,]+))/i);
     if (!match) {
         throw createApiError(400, 'Missing multipart boundary.');
     }
-    const boundary = match[1] || match[2];
+    const boundary = (match[1] || match[2] || '').trim();
     if (!boundary || boundary.length > 200) {
         throw createApiError(400, 'Invalid multipart boundary.');
     }
@@ -130,28 +130,46 @@ function parseMultipartFormData(rawBuf, contentType) {
             continue;
         }
 
-        const headerText = partBuf.slice(0, headerEnd).toString('utf8');
+        const headerText = partBuf.slice(0, headerEnd).toString('utf8').replace(/\r?\n[ \t]+/g, ' ');
         const bodyBuf = partBuf.slice(headerEnd + sepLen);
 
         let dispLine = '';
         let partContentType = 'application/octet-stream';
         for (const line of headerText.split(/\r?\n/)) {
-            const lower = line.toLowerCase();
-            if (lower.startsWith('content-disposition:')) dispLine = line;
-            else if (lower.startsWith('content-type:')) partContentType = line.slice(13).trim();
+            const colonIdx = line.indexOf(':');
+            if (colonIdx <= 0) continue;
+            const headerName = line.slice(0, colonIdx).trim().toLowerCase();
+            if (headerName === 'content-disposition') dispLine = line;
+            else if (headerName === 'content-type') partContentType = line.slice(colonIdx + 1).trim();
         }
 
-        const nameMatch = dispLine.match(/\bname="([^"]+)"/i);
-        const fieldName = nameMatch ? nameMatch[1] : '';
+        const nameQuoted = dispLine.match(/;\s*name\s*=\s*"((?:\\.|[^"])*)"/i) || dispLine.match(/\bname\s*=\s*"((?:\\.|[^"])*)"/i);
+        const nameBare = !nameQuoted ? dispLine.match(/;\s*name\s*=\s*([^;\s]+)/i) : null;
+        const fieldName = nameQuoted
+            ? nameQuoted[1].replace(/\\(.)/g, '$1')
+            : (nameBare ? nameBare[1] : '');
+
         if (!fieldName || fieldName === '__proto__' || fieldName === 'constructor' || fieldName === 'prototype') {
             pos = nextPos;
             continue;
         }
 
-        const fileMatch = dispLine.match(/\bfilename="([^"]*)"/i);
-        if (fileMatch) {
+        const fileExtMatch = dispLine.match(/;\s*filename\*\s*=\s*(?:"(?:[^']*'[^']*')?([^"\r\n]+)"|(?:[^']*'[^']*')?([^;\s\r\n]+))/i);
+        const fileQuotedMatch = dispLine.match(/;\s*filename\s*=\s*"((?:\\.|[^"])*)"/i) || dispLine.match(/\bfilename\s*=\s*"((?:\\.|[^"])*)"/i);
+        const fileBareMatch = !fileExtMatch && !fileQuotedMatch ? dispLine.match(/;\s*filename\s*=\s*([^;\r\n]+)/i) : null;
+
+        if (fileExtMatch || fileQuotedMatch || fileBareMatch) {
+            let decodedName = '';
+            if (fileExtMatch) {
+                const rawExt = String(fileExtMatch[1] || fileExtMatch[2] || '').trim();
+                try { decodedName = decodeURIComponent(rawExt); } catch { decodedName = rawExt; }
+            } else if (fileQuotedMatch) {
+                decodedName = fileQuotedMatch[1].replace(/\\(.)/g, '$1');
+            } else if (fileBareMatch) {
+                decodedName = fileBareMatch[1].trim();
+            }
             files[fieldName] = {
-                filename: fileMatch[1],
+                filename: decodedName,
                 contentType: partContentType,
                 buffer: bodyBuf
             };
@@ -174,7 +192,7 @@ async function callTelegramEndpoint(botToken, endpoint, formData) {
     return { ok: Boolean(res.ok && data && data.ok), status: res.status, data };
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
     const method = String(req.method || 'GET').toUpperCase();
     if (method !== 'POST') {
         return sendJson(res, 405, { ok: false, error: 'Method Not Allowed.' }, { Allow: 'POST' });
@@ -198,14 +216,15 @@ module.exports = async function handler(req, res) {
         });
     }
 
-    const contentType = String((req.headers && req.headers['content-type']) || '').toLowerCase();
+    const rawContentType = String((req.headers && (req.headers['content-type'] || req.headers['Content-Type'])) || '');
+    const contentTypeLower = rawContentType.toLowerCase();
     let fields = Object.create(null);
     let files = Object.create(null);
 
     try {
-        if (contentType.includes('multipart/form-data')) {
+        if (contentTypeLower.includes('multipart/form-data')) {
             const rawBuf = await readRawBody(req, MAX_BODY_BYTES);
-            const parsed = parseMultipartFormData(rawBuf, contentType);
+            const parsed = parseMultipartFormData(rawBuf, rawContentType);
             fields = parsed.fields;
             files = parsed.files;
         } else {
@@ -245,7 +264,7 @@ module.exports = async function handler(req, res) {
         return sendJson(res, err.status || 400, { ok: false, error: err.message || 'Invalid request payload.' });
     }
 
-    const name = sanitizeText(fields.name, { maxLen: 80 });
+    const name = sanitizeText(fields.name || fields.username, { maxLen: 80 });
     const cash = sanitizeText(fields.cash, { maxLen: 64 });
     const tool = sanitizeText(fields.tool, { maxLen: 100 });
     const notes = sanitizeText(fields.notes || 'لا يوجد', { maxLen: 500, allowNewlines: true }) || 'لا يوجد';
@@ -255,18 +274,25 @@ module.exports = async function handler(req, res) {
     const mailLockedRaw = fields.mailLocked !== undefined && fields.mailLocked !== null
         ? String(fields.mailLocked).trim()
         : (fields.mailLockedCount !== undefined && fields.mailLockedCount !== null ? String(fields.mailLockedCount).trim() : '');
+    const totalTokensRaw = fields.totalTokens !== undefined && fields.totalTokens !== null
+        ? String(fields.totalTokens).trim()
+        : (fields.totalTokensCount !== undefined && fields.totalTokensCount !== null ? String(fields.totalTokensCount).trim() : '');
 
     if (name.length < 2 || cash.length < 2 || tool.length < 1) {
         return sendJson(res, 400, { ok: false, error: 'Missing required report fields (name, cash, tool).' });
     }
-    if ((validRaw !== '' && !/^\d{1,7}$/.test(validRaw)) || (mailLockedRaw !== '' && !/^\d{1,7}$/.test(mailLockedRaw))) {
-        return sendJson(res, 400, { ok: false, error: 'Valid and Locked Mail counts must be non-negative integers.' });
+    if ((validRaw !== '' && !/^\d{1,9}$/.test(validRaw)) ||
+        (mailLockedRaw !== '' && !/^\d{1,9}$/.test(mailLockedRaw)) ||
+        (totalTokensRaw !== '' && !/^\d{1,9}$/.test(totalTokensRaw))) {
+        return sendJson(res, 400, { ok: false, error: 'Valid, Locked Mail, and Total Tokens counts must be non-negative integers.' });
     }
 
     const validCount = validRaw !== '' ? parseInt(validRaw, 10) : null;
     const mailLockedCount = mailLockedRaw !== '' ? parseInt(mailLockedRaw, 10) : null;
+    const totalTokensCount = totalTokensRaw !== '' ? parseInt(totalTokensRaw, 10) : null;
     const validDisplay = validCount === null ? '-' : String(validCount);
     const mailLockedDisplay = mailLockedCount === null ? '-' : String(mailLockedCount);
+    const totalTokensDisplay = totalTokensCount === null ? '-' : String(totalTokensCount);
 
     const docFile = files.document;
     if (!docFile || !Buffer.isBuffer(docFile.buffer)) {
@@ -306,7 +332,7 @@ module.exports = async function handler(req, res) {
         minute: '2-digit'
     });
 
-    const statsBlock = `\n<b>Valid /</b>\n<code>${escapeTelegramHtml(validDisplay)}</code>\n\n<b>Locked Mail /</b>\n<code>${escapeTelegramHtml(mailLockedDisplay)}</code>\n`;
+    const statsBlock = `\n<b>Valid /</b>\n<code>${escapeTelegramHtml(validDisplay)}</code>\n\n<b>Locked Mail /</b>\n<code>${escapeTelegramHtml(mailLockedDisplay)}</code>\n\n<b>Total Tokens /</b>\n<code>${escapeTelegramHtml(totalTokensDisplay)}</code>\n`;
     const caption =
         `<b>تقرير عمل يومي جديد</b>
 ────────────────────
@@ -345,7 +371,7 @@ ${escapeTelegramHtml(notes)}`;
         const docMessageId = docRes.data && docRes.data.result ? docRes.data.result.message_id : null;
 
         if (photoFile && detectedPhotoMime) {
-            const imgCaption = `<b>صورة الفحص</b> — ${escapeTelegramHtml(name)} (${escapeTelegramHtml(tool)})\nValid: <code>${escapeTelegramHtml(validDisplay)}</code> | Locked Mail: <code>${escapeTelegramHtml(mailLockedDisplay)}</code>`;
+            const imgCaption = `<b>صورة الفحص</b> — ${escapeTelegramHtml(name)} (${escapeTelegramHtml(tool)})\nValid: <code>${escapeTelegramHtml(validDisplay)}</code> | Locked Mail: <code>${escapeTelegramHtml(mailLockedDisplay)}</code> | Total Tokens: <code>${escapeTelegramHtml(totalTokensDisplay)}</code>`;
             const photoFd = new FormData();
             photoFd.append('chat_id', chatId);
             photoFd.append('photo', new Blob([photoFile.buffer], { type: detectedPhotoMime }), safePhotoName);
@@ -384,5 +410,12 @@ ${escapeTelegramHtml(notes)}`;
     } catch (err) {
         console.error('Telegram upstream request error:', err && err.message);
         return sendJson(res, 502, { ok: false, error: 'Upstream Telegram delivery failed.' });
+    }
+}
+
+module.exports = handler;
+module.exports.config = {
+    api: {
+        bodyParser: false
     }
 };
